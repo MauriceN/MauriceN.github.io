@@ -832,7 +832,19 @@ h1 {
         align-items: center;
     }
 
+    .left-sidebar {
+        order: 2;
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+    }
+
+    .container {
+        order: 1;
+    }
+
     .ev-sidebar {
+        order: 3;
         width: 100%;
         max-width: 500px;
         flex-direction: row;
@@ -886,17 +898,31 @@ h1 {
     }
 
     .left-sidebar {
+        display: flex;
+        order: 2;
         max-width: 100%;
         padding: 0 10px;
     }
 
+    .range-viewer {
+        width: 100%;
+    }
+
     .range-cell {
-        font-size: 0.5rem;
-        padding: 1px;
+        font-size: 0.45rem;
+        padding: 0;
     }
 
     .range-grid {
         gap: 1px;
+    }
+
+    .range-header h3 {
+        font-size: 0.85rem;
+    }
+
+    .range-legend {
+        font-size: 0.65rem;
     }
 
     .mistake-item {
