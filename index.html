@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Preflop Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-header">
+    <h1>Preflop Trainer</h1>
+    <p class="subtitle">6-Max No-Limit Hold'em</p>
+</div>
+
+<div class="app-layout">
+    <!-- Left Sidebar - Range Viewer -->
+    <div class="left-sidebar">
+        <div class="range-viewer">
+            <div class="range-header">
+                <h3>Range Viewer</h3>
+                <div class="range-toggle">
+                    <span class="toggle-label">Aktion</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="range-mode-toggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">Equity</span>
+                </div>
+            </div>
+            <div class="range-info" id="range-info">-</div>
+            <div class="range-grid-container">
+                <div class="range-grid" id="range-grid">
+                    <!-- Grid wird via JS generiert -->
+                </div>
+                <div class="range-spoiler" id="range-spoiler">
+                    <span>Nach Antwort sichtbar</span>
+                </div>
+            </div>
+            <div class="range-legend" id="range-legend">
+                <span class="legend-item raise">Raise</span>
+                <span class="legend-item call">Call</span>
+                <span class="legend-item mixed">Mixed</span>
+                <span class="legend-item fold">Fold</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="rfi">RFI</button>
+            <button class="mode-btn" data-mode="3bet">3-Bet</button>
+        </div>
+
+        <!-- Card Display Area -->
+        <div class="card-area">
+            <div class="cards">
+                <!-- Cards werden via JS eingefügt -->
+            </div>
+            <div class="situation">
+                <div class="position-badge">Du bist BTN</div>
+                <p class="scenario-text">Alle vor dir haben <strong>gefoldet</strong>.<br>Was machst du?</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button class="action-btn fold" data-action="fold">Fold</button>
+            <button class="action-btn call" data-action="call" style="display: none;">Call</button>
+            <button class="action-btn raise" data-action="raise">Raise</button>
+        </div>
+
+        <!-- Feedback -->
+        <div class="feedback">
+            <div class="feedback-icon">✓</div>
+            <div class="feedback-text">Richtig!</div>
+            <div class="correct-answer"></div>
+        </div>
+
+        <!-- Next Button -->
+        <button class="next-btn">Nächste Hand →</button>
+
+        <!-- Score -->
+        <div class="score-area">
+            <div class="score-item">
+                <span class="score-label">Richtig</span>
+                <span class="score-value" id="score-correct">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Gesamt</span>
+                <span class="score-value" id="score-total">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Quote</span>
+                <span class="score-value" id="score-percent">0%</span>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-toggle">
+            <button>⚙ Positionen filtern</button>
+        </div>
+        <div class="settings-panel">
+            <h3>Aktive Positionen</h3>
+            <div class="position-filters">
+                <input type="checkbox" class="position-filter" id="pos-utg" value="UTG" checked>
+                <label for="pos-utg">UTG</label>
+
+                <input type="checkbox" class="position-filter" id="pos-hj" value="HJ" checked>
+                <label for="pos-hj">HJ</label>
+
+                <input type="checkbox" class="position-filter" id="pos-co" value="CO" checked>
+                <label for="pos-co">CO</label>
+
+                <input type="checkbox" class="position-filter" id="pos-btn" value="BTN" checked>
+                <label for="pos-btn">BTN</label>
+
+                <input type="checkbox" class="position-filter" id="pos-sb" value="SB" checked>
+                <label for="pos-sb">SB</label>
+
+                <input type="checkbox" class="position-filter" id="pos-bb" value="BB" checked>
+                <label for="pos-bb">BB</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- EV Sidebar -->
+    <div class="ev-sidebar">
+        <!-- EV Metriken -->
+        <div class="ev-metrics">
+            <div class="ev-metric-row main-metric">
+                <div class="ev-metric">
+                    <span class="ev-metric-label">Net EV /100h</span>
+                    <span class="ev-metric-value ev-positive" id="ev-per-100">+0</span>
+                </div>
+                <div class="ev-metric">
+                    <span class="ev-metric-label">Bewertung</span>
+                    <span class="ev-rating" id="ev-rating">-</span>
+                </div>
+            </div>
+            <div class="ev-metric-row">
+                <div class="ev-metric">
+                    <span class="ev-metric-label">Gains</span>
+                    <span class="ev-metric-value ev-gain-value" id="ev-gain">+0</span>
+                </div>
+                <div class="ev-metric">
+                    <span class="ev-metric-label">Losses</span>
+                    <span class="ev-metric-value ev-loss-value" id="ev-loss">-0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teuerste Fehler -->
+        <div class="mistakes-panel">
+            <h3>Teuerste Fehler</h3>
+            <ul class="mistakes-list" id="mistakes-list">
+                <li class="no-mistakes">Noch keine Fehler!</li>
+            </ul>
+        </div>
+
+        <!-- EV-Loss Legende pro Hand -->
+        <div class="ev-legend">
+            <h4>EV-Loss pro Fehler</h4>
+            <table>
+                <tr><td class="rating-excellent">0-15</td><td>Kleiner Fehler</td></tr>
+                <tr><td class="rating-good">15-35</td><td>Mittlerer Fehler</td></tr>
+                <tr><td class="rating-medium">35-60</td><td>Großer Fehler</td></tr>
+                <tr><td class="rating-bad">60+</td><td>Kritischer Fehler</td></tr>
+            </table>
+        </div>
+
+        <!-- Bewertungs-Legende -->
+        <div class="ev-legend">
+            <h4>Bewertung (Net EV/100h)</h4>
+            <table>
+                <tr><td class="rating-excellent">6000+</td><td>Perfekt</td></tr>
+                <tr><td class="rating-excellent">4000+</td><td>Sehr gut</td></tr>
+                <tr><td class="rating-good">2000+</td><td>Solide</td></tr>
+                <tr><td class="rating-medium">0+</td><td>Ausbaufähig</td></tr>
+                <tr><td class="rating-bad">&lt;0</td><td>Negativ</td></tr>
+            </table>
+        </div>
+    </div>
+    </div>
+
+    <script src="ranges.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
