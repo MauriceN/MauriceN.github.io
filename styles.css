@@ -15,6 +15,36 @@ body {
     padding: 20px;
 }
 
+/* Main Navigation */
+.main-nav {
+    display: flex;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px;
+    border-radius: 30px;
+    margin-bottom: 20px;
+}
+
+.nav-item {
+    padding: 10px 28px;
+    color: #a0d0a0;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 25px;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    background: rgba(74, 124, 74, 0.3);
+    color: #fff;
+}
+
+.nav-item.active {
+    background: #4a7c4a;
+    color: #fff;
+}
+
 /* App Header */
 .app-header {
     text-align: center;
