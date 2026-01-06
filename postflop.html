@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Postflop Trainer - C-Bet</title>
+    <link rel="stylesheet" href="postflop-styles.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-item">Preflop</a>
+        <a href="postflop.html" class="nav-item active">Postflop</a>
+    </nav>
+
+    <header class="app-header">
+        <h1>Postflop Trainer</h1>
+        <p class="subtitle">6-Max No-Limit Hold'em - C-Bet Decisions</p>
+    </header>
+
+    <div class="app-layout">
+        <!-- Left Sidebar: Texture Legend -->
+        <aside class="left-sidebar">
+            <div class="texture-legend">
+                <h4>Board Texturen</h4>
+                <div class="texture-legend-list">
+                    <div class="texture-legend-item">
+                        <span class="badge dry">Dry</span>
+                        <span>Rainbow, unconnected</span>
+                    </div>
+                    <div class="texture-legend-item">
+                        <span class="badge wet">Wet</span>
+                        <span>Flush Draw, Connects</span>
+                    </div>
+                    <div class="texture-legend-item">
+                        <span class="badge paired">Paired</span>
+                        <span>Zwei gleiche Ränge</span>
+                    </div>
+                    <div class="texture-legend-item">
+                        <span class="badge monotone">Monotone</span>
+                        <span>Alle gleiche Farbe</span>
+                    </div>
+                    <div class="texture-legend-item">
+                        <span class="badge connected">Connected</span>
+                        <span>Aufeinanderfolgende</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="settings-toggle">
+                <button onclick="toggleSettings()">Einstellungen</button>
+            </div>
+            <div id="settings-panel" class="settings-panel">
+                <h3>Filter</h3>
+
+                <div class="filter-group">
+                    <h4>Texturen</h4>
+                    <div class="filter-options">
+                        <input type="checkbox" class="filter-option" id="tex-dry" value="dry" checked>
+                        <label for="tex-dry">Dry</label>
+                        <input type="checkbox" class="filter-option" id="tex-wet" value="wet" checked>
+                        <label for="tex-wet">Wet</label>
+                        <input type="checkbox" class="filter-option" id="tex-paired" value="paired" checked>
+                        <label for="tex-paired">Paired</label>
+                        <input type="checkbox" class="filter-option" id="tex-monotone" value="monotone" checked>
+                        <label for="tex-monotone">Monotone</label>
+                        <input type="checkbox" class="filter-option" id="tex-connected" value="connected" checked>
+                        <label for="tex-connected">Connected</label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Spots (C-Bet)</h4>
+                    <div class="filter-options">
+                        <input type="checkbox" class="filter-option" id="spot-btn-bb" value="BTN_vs_BB" checked>
+                        <label for="spot-btn-bb">BTN vs BB</label>
+                        <input type="checkbox" class="filter-option" id="spot-co-bb" value="CO_vs_BB" checked>
+                        <label for="spot-co-bb">CO vs BB</label>
+                        <input type="checkbox" class="filter-option" id="spot-sb-bb" value="SB_vs_BB" checked>
+                        <label for="spot-sb-bb">SB vs BB</label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Spots (Facing C-Bet)</h4>
+                    <div class="filter-options">
+                        <input type="checkbox" class="filter-option" id="spot-bb-btn" value="BB_vs_BTN" checked>
+                        <label for="spot-bb-btn">BB vs BTN</label>
+                        <input type="checkbox" class="filter-option" id="spot-bb-co" value="BB_vs_CO" checked>
+                        <label for="spot-bb-co">BB vs CO</label>
+                        <input type="checkbox" class="filter-option" id="spot-bb-sb" value="BB_vs_SB" checked>
+                        <label for="spot-bb-sb">BB vs SB</label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="container">
+            <!-- Mode Selector -->
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="cbet">C-Bet</button>
+                <button class="mode-btn" data-mode="facing-cbet">Facing C-Bet</button>
+            </div>
+
+            <!-- Card Area -->
+            <div class="card-area">
+                <!-- Board (Flop) -->
+                <div class="board-section">
+                    <div class="board-label">Board</div>
+                    <div class="board-cards" id="board-cards">
+                        <div class="board-card" id="board-card-1">
+                            <span class="rank">?</span>
+                            <span class="suit">?</span>
+                        </div>
+                        <div class="board-card" id="board-card-2">
+                            <span class="rank">?</span>
+                            <span class="suit">?</span>
+                        </div>
+                        <div class="board-card" id="board-card-3">
+                            <span class="rank">?</span>
+                            <span class="suit">?</span>
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <span class="texture-badge" id="texture-badge">Dry</span>
+                    </div>
+                </div>
+
+                <!-- Hero Hand -->
+                <div class="hero-section">
+                    <div class="hero-label">Deine Hand</div>
+                    <div class="hero-cards" id="hero-cards">
+                        <div class="hero-card" id="hero-card-1">
+                            <span class="rank">?</span>
+                            <span class="suit">?</span>
+                        </div>
+                        <div class="hero-card" id="hero-card-2">
+                            <span class="rank">?</span>
+                            <span class="suit">?</span>
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <span class="hand-category-badge" id="hand-category-badge">Top Pair</span>
+                    </div>
+                </div>
+
+                <!-- Situation -->
+                <div class="situation">
+                    <span class="position-badge" id="position-badge">BTN</span>
+                    <p class="scenario-text" id="scenario-text">
+                        Du bist <strong>PFR am BTN</strong>, BB callt.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="actions" id="actions">
+                <!-- C-Bet Mode -->
+                <button class="action-btn cbet" id="btn-cbet" onclick="handleAction('cbet')">
+                    C-Bet
+                    <span class="keyboard-hint">[B]</span>
+                </button>
+                <button class="action-btn check" id="btn-check" onclick="handleAction('check')">
+                    Check
+                    <span class="keyboard-hint">[K]</span>
+                </button>
+                <!-- Facing C-Bet Mode (initially hidden) -->
+                <button class="action-btn fold" id="btn-fold" onclick="handleAction('fold')" style="display: none;">
+                    Fold
+                    <span class="keyboard-hint">[F]</span>
+                </button>
+                <button class="action-btn call" id="btn-call" onclick="handleAction('call')" style="display: none;">
+                    Call
+                    <span class="keyboard-hint">[C]</span>
+                </button>
+                <button class="action-btn raise" id="btn-raise" onclick="handleAction('raise')" style="display: none;">
+                    Raise
+                    <span class="keyboard-hint">[R]</span>
+                </button>
+            </div>
+
+            <!-- Feedback -->
+            <div class="feedback" id="feedback">
+                <div class="feedback-icon" id="feedback-icon"></div>
+                <div class="feedback-text" id="feedback-text"></div>
+                <div class="correct-answer" id="correct-answer"></div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+
+            <!-- Next Button -->
+            <button class="next-btn" id="next-btn" onclick="nextScenario()">
+                Nächste Hand [Space]
+            </button>
+
+            <!-- Score -->
+            <div class="score-area">
+                <div class="score-item">
+                    <span class="score-label">Richtig</span>
+                    <span class="score-value good" id="correct-count">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Gesamt</span>
+                    <span class="score-value" id="total-count">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Quote</span>
+                    <span class="score-value" id="percentage">0%</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar: EV Metrics -->
+        <aside class="ev-sidebar">
+            <!-- EV Metrics -->
+            <div class="ev-metrics">
+                <div class="ev-metric-row">
+                    <div class="ev-metric main-metric">
+                        <span class="ev-metric-label">Net EV</span>
+                        <span class="ev-metric-value ev-positive" id="net-ev">+0</span>
+                    </div>
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">EV/100 Hands</span>
+                        <span class="ev-rating rating-good" id="ev-rating">-</span>
+                    </div>
+                </div>
+                <div class="ev-metric-row">
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">EV Gains</span>
+                        <span class="ev-gain-value" id="ev-gains">+0</span>
+                    </div>
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">EV Losses</span>
+                        <span class="ev-loss-value" id="ev-losses">-0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mistakes -->
+            <div class="mistakes-panel">
+                <h3>Top Fehler</h3>
+                <ul class="mistakes-list" id="mistakes-list">
+                    <li class="no-mistakes">Noch keine Fehler!</li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+    <script src="postflop-ranges.js"></script>
+    <script src="postflop.js"></script>
+</body>
+</html>
