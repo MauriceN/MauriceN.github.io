@@ -18,9 +18,17 @@ const FACING_CBET_SPOTS = ['BB_vs_BTN', 'BB_vs_CO', 'BB_vs_SB'];
 const TEXTURES = ['dry', 'wet', 'paired', 'monotone', 'connected'];
 
 const HAND_CATEGORY_NAMES = {
+    'quads': 'Quads',
+    'straight_flush': 'Straight Flush',
+    'flush': 'Flush',
+    'straight': 'Straight',
+    'full_house': 'Full House',
+    'trips': 'Trips',
     'set': 'Set',
     'two_pair': 'Two Pair',
     'overpair': 'Overpair',
+    'underpair_high': 'Underpair (hoch)',
+    'underpair_low': 'Underpair (niedrig)',
     'top_pair_good': 'Top Pair (guter Kicker)',
     'top_pair_weak': 'Top Pair (schwacher Kicker)',
     'second_pair': 'Second Pair',
@@ -68,6 +76,30 @@ const TEXTURE_CONCEPTS = {
 const HAND_EXPLANATIONS = {
     // C-Bet Mode Erklärungen
     cbet: {
+        quads: {
+            shouldBet: 'Quads sind die zweitstärkste Hand! Value-Bet, aber erwarte wenig Action.',
+            shouldCheck: 'Check um Villain bluffen zu lassen - du hast das Board praktisch gelockt.'
+        },
+        straight_flush: {
+            shouldBet: 'Straight Flush - die stärkste Hand! Baue den Pot für maximalen Value.',
+            shouldCheck: 'Slow-Play kann sinnvoll sein, da Villain kaum mitgehen kann.'
+        },
+        straight: {
+            shouldBet: 'Du hast eine Straight! Value-Bet und baue den Pot gegen schlechtere Hände.',
+            shouldCheck: 'Auf sehr nassen Boards mit höheren Straights möglich ist Check manchmal besser.'
+        },
+        flush: {
+            shouldBet: 'Du hast einen Flush - eine sehr starke Hand! Baue den Pot mit einer Value-Bet.',
+            shouldCheck: 'Auf monotonen Boards könnte ein Check Villain erlauben zu bluffen, wenn er keinen Flush hat.'
+        },
+        full_house: {
+            shouldBet: 'Full House ist ein Monster. Value-Bet und baue den Pot aggressiv auf.',
+            shouldCheck: 'Full House kann auch slowplayen um Villain Bluffs zu erlauben.'
+        },
+        trips: {
+            shouldBet: 'Trips auf einem Paired Board ist stark. C-Bet für Value von Overpairs und Draws.',
+            shouldCheck: 'Check kann Sinn machen um nicht alle Bluffs zu vertreiben.'
+        },
         set: {
             shouldBet: 'Sets sind Monster-Hände. Baue den Pot auf und hole Value von schwächeren Händen.',
             shouldCheck: 'Selbst Sets können auf gefährlichen Boards manchmal checken, um Raises zu vermeiden.'
@@ -79,6 +111,14 @@ const HAND_EXPLANATIONS = {
         overpair: {
             shouldBet: 'Overpairs sind auf den meisten Boards klar Value. C-Bet und baue den Pot.',
             shouldCheck: 'Auf sehr connected/monotone Boards kann Check sinnvoll sein - du bist oft schon hinten.'
+        },
+        underpair_high: {
+            shouldBet: 'Hohe Underpairs (z.B. JJ auf Q-high) haben Showdown Value. C-Bet kann als Thin Value funktionieren.',
+            shouldCheck: 'Check ist oft besser - du schlägst wenig und wirst von besserem gecallt. Pot Control.'
+        },
+        underpair_low: {
+            shouldBet: 'Niedrige Underpairs sind zu schwach für Value. Nur als Bluff auf sehr dry Boards.',
+            shouldCheck: 'Check ist Standard. Du hast etwas Showdown Value, aber zu wenig für eine Value-Bet.'
         },
         top_pair_good: {
             shouldBet: 'Top Pair mit gutem Kicker ist Value. C-Bet um von schlechteren Pairs und Draws gecallt zu werden.',
@@ -123,6 +163,36 @@ const HAND_EXPLANATIONS = {
     },
     // Facing C-Bet Erklärungen
     facing: {
+        quads: {
+            shouldRaise: 'Quads raisen für Value! Aber Slow-Play ist auch eine Option.',
+            shouldCall: 'Call um Villain weitere Bluffs zu erlauben - du kannst nicht verlieren.',
+            shouldFold: 'Quads folden? Niemals!'
+        },
+        straight_flush: {
+            shouldRaise: 'Straight Flush raisen für maximalen Value!',
+            shouldCall: 'Slow-Play um Villain mehr Chips zu entlocken.',
+            shouldFold: 'Straight Flush folden ist unmöglich falsch.'
+        },
+        straight: {
+            shouldRaise: 'Mit einer Straight solltest du für Value raisen!',
+            shouldCall: 'Call ist ok, besonders wenn höhere Straights möglich sind.',
+            shouldFold: 'Straight folden ist fast nie korrekt auf dem Flop.'
+        },
+        flush: {
+            shouldRaise: 'Mit einem Flush solltest du für Value raisen! Villain hat oft genug Hände zum Callen.',
+            shouldCall: 'Slow-Play kann funktionieren um Villain weitere Barrels bluffen zu lassen.',
+            shouldFold: 'Einen Flush folden? Fast nie korrekt - außer auf 4-to-a-Straight Boards mit Action.'
+        },
+        full_house: {
+            shouldRaise: 'Full House ist ein Monster. Raise für Value und baue den Pot.',
+            shouldCall: 'Call um Villain weitere Bluffs zu erlauben - aber Raise ist meist besser.',
+            shouldFold: 'Full House folden ist praktisch nie korrekt.'
+        },
+        trips: {
+            shouldRaise: 'Trips ist stark genug zum Raisen. Hole Value von Overpairs und Draws.',
+            shouldCall: 'Call ist ok, aber mit Trips willst du meist den Pot vergrößern.',
+            shouldFold: 'Trips folden ist viel zu tight - du hast eine sehr starke Hand!'
+        },
         set: {
             shouldRaise: 'Sets sollten für Value raisen. Der Gegner hat oft genug Top Pairs zum Weiterspielen.',
             shouldCall: 'Slow-Play kann auf trockenen Boards Sinn machen um Villain weitere Barrels zu erlauben.',
@@ -137,6 +207,16 @@ const HAND_EXPLANATIONS = {
             shouldRaise: 'Overpairs können raisen für Value, aber Call ist auch ok.',
             shouldCall: 'Call ist Standard. Du schlägst Bluffs und schwächere Value-Hände.',
             shouldFold: 'Overpair folden ist fast nie korrekt gegen eine einzelne C-Bet.'
+        },
+        underpair_high: {
+            shouldRaise: 'Hohe Underpairs als Raise ist aggressiv. Nur als Bluff oder mit sehr guten Reads.',
+            shouldCall: 'Call ist Standard. Du schlägst Bluffs und hast Implied Odds auf ein Set.',
+            shouldFold: 'Fold ist zu tight. Hohe Underpairs haben genug Equity gegen C-Bet Range.'
+        },
+        underpair_low: {
+            shouldRaise: 'Niedrige Underpairs raisen ist reiner Bluff. Selten sinnvoll.',
+            shouldCall: 'Call nur mit guten Pot Odds. Dein Pair ist oft dominiert.',
+            shouldFold: 'Fold ist oft korrekt bei niedrigen Underpairs - zu wenig Equity.'
         },
         top_pair_good: {
             shouldRaise: 'Top Pair guter Kicker kann raisen, aber Call ist meist besser - du willst Villain bluffen lassen.',
@@ -392,22 +472,130 @@ function evaluateHandCategory(heroHand, board) {
     const secondBoardValue = boardValues[1];
     const lowestBoardValue = boardValues[2];
 
-    // Check für Set (Pocket Pair trifft Board)
+    // Alle Karten kombinieren
+    const allCards = [...heroHand, ...board];
+    const allRanks = allCards.map(c => c.rank);
+    const allSuits = [...heroSuits, ...boardSuits];
+    const allValues = [...heroValues, ...boardValues];
+
+    // Zähle Ränge für Quads/Trips Check
+    const allRankCounts = {};
+    allRanks.forEach(r => allRankCounts[r] = (allRankCounts[r] || 0) + 1);
+    const maxRankCount = Math.max(...Object.values(allRankCounts));
+
+    // Zähle Farben für Flush-Check
+    const suitCounts = {};
+    allSuits.forEach(s => suitCounts[s] = (suitCounts[s] || 0) + 1);
+    const maxSuitCount = Math.max(...Object.values(suitCounts));
+
+    // Finde Flush-Farbe falls vorhanden
+    const flushSuit = Object.entries(suitCounts).find(([s, c]) => c >= 5)?.[0];
+
+    // STRAIGHT CHECK Hilfsfunktion
+    const checkStraight = (values) => {
+        const unique = [...new Set(values)].sort((a, b) => a - b);
+        // Ace low für Wheel (A2345)
+        if (unique.includes(14)) {
+            unique.unshift(1);
+        }
+        for (let i = 0; i <= unique.length - 5; i++) {
+            if (unique[i + 4] - unique[i] === 4) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // STRAIGHT FLUSH CHECK (muss zuerst kommen!)
+    if (maxSuitCount >= 5 && flushSuit) {
+        // Hole alle Karten der Flush-Farbe
+        const flushCards = allCards.filter(c => c.suit === flushSuit);
+        const flushValues = flushCards.map(c => RANK_VALUES[c.rank]);
+        // Prüfe ob Hero am Straight Flush beteiligt ist
+        const heroHasFlushSuit = heroSuits.includes(flushSuit);
+        if (heroHasFlushSuit && checkStraight(flushValues)) {
+            return 'straight_flush';
+        }
+    }
+
+    // QUADS CHECK (4 gleiche)
+    if (maxRankCount >= 4) {
+        // Prüfe ob Hero an den Quads beteiligt ist
+        const quadsRank = Object.entries(allRankCounts).find(([r, c]) => c >= 4)?.[0];
+        if (heroRanks.includes(quadsRank)) {
+            return 'quads';
+        }
+    }
+
+    // FLUSH CHECK (5 gleiche Farbe)
+    if (maxSuitCount >= 5) {
+        // Prüfe ob Hero am Flush beteiligt ist
+        if (heroSuits.includes(flushSuit)) {
+            return 'flush';
+        }
+    }
+
+    // STRAIGHT CHECK (5 aufeinanderfolgende)
+    const uniqueAllValues = [...new Set(allValues)].sort((a, b) => a - b);
+    if (checkStraight(allValues)) {
+        // Prüfe ob Hero an der Straight beteiligt ist (mindestens eine Karte)
+        // Eine Straight braucht 5 aufeinanderfolgende - Hero muss mindestens eine haben
+        // die nicht durch das Board allein erreicht wird
+        const boardOnlyStraight = checkStraight(boardValues);
+        if (!boardOnlyStraight || heroValues.some(v => {
+            // Prüfe ob Hero-Karte Teil einer Straight ist
+            const withoutHeroCard = allValues.filter((val, idx) => idx !== allValues.indexOf(v));
+            return !checkStraight(withoutHeroCard) || uniqueAllValues.length > [...new Set(boardValues)].length;
+        })) {
+            return 'straight';
+        }
+    }
+
+    // Zähle Board-Ränge für Full House / Trips Check
+    const boardRankCounts = {};
+    boardRanks.forEach(r => boardRankCounts[r] = (boardRankCounts[r] || 0) + 1);
+    const boardPairRank = Object.entries(boardRankCounts).find(([r, c]) => c >= 2)?.[0];
+
+    // Check für Set / Full House (Pocket Pair trifft Board)
     if (heroRanks[0] === heroRanks[1]) {
         const pocketValue = heroValues[0];
         if (boardRanks.includes(heroRanks[0])) {
+            // Hero hat Trips/Quads mit seinem Pocket Pair
+            // Prüfe ob Board ein separates Pair hat → Full House
+            const otherBoardPair = Object.entries(boardRankCounts).find(([r, c]) => c >= 2 && r !== heroRanks[0]);
+            if (otherBoardPair) {
+                return 'full_house';
+            }
             return 'set';
         }
         // Overpair
         if (pocketValue > highestBoardValue) {
             return 'overpair';
         }
+        // Underpair (Pocket Pair unter höchster Board-Karte)
+        if (pocketValue > secondBoardValue) {
+            return 'underpair_high'; // z.B. JJ auf Q62
+        }
+        return 'underpair_low'; // z.B. 55 auf Q62
     }
 
-    // Check für Two Pair
+    // Check für Two Pair / Full House / Trips
     const heroHitsBoard = heroRanks.filter(r => boardRanks.includes(r));
     if (heroHitsBoard.length === 2 && heroRanks[0] !== heroRanks[1]) {
+        // Hero trifft beide Karten auf dem Board
+        // Prüfe ob eine davon ein Board-Pair ist → Full House
+        for (const hitRank of heroHitsBoard) {
+            if (boardRankCounts[hitRank] >= 2) {
+                // Hero hat Trips (z.B. 6 auf Board 66x) + Pair (andere Karte) = Full House
+                return 'full_house';
+            }
+        }
         return 'two_pair';
+    }
+
+    // Check für Trips (Hero hat eine Karte eines Board-Pairs)
+    if (heroHitsBoard.length === 1 && boardPairRank && heroHitsBoard[0] === boardPairRank) {
+        return 'trips';
     }
 
     // Check für Pair
@@ -430,18 +618,12 @@ function evaluateHandCategory(heroHand, board) {
         }
     }
 
-    // Check für Draws
-    const allSuits = [...heroSuits, ...boardSuits];
-    const suitCounts = {};
-    allSuits.forEach(s => suitCounts[s] = (suitCounts[s] || 0) + 1);
-    const maxSuitCount = Math.max(...Object.values(suitCounts));
-
-    if (maxSuitCount >= 4) {
+    // Check für Flush Draw (genau 4 gleiche Farbe)
+    if (maxSuitCount === 4) {
         return 'flush_draw';
     }
 
     // Straight Draw Check
-    const allValues = [...heroValues, ...boardValues];
     const uniqueValues = [...new Set(allValues)].sort((a, b) => a - b);
     const straightDraw = checkStraightDraw(uniqueValues);
     if (straightDraw === 'oesd') {
@@ -519,34 +701,57 @@ function determineCorrectAction(spot, texture, handCategory) {
         return { action: 'check', isMixed: false };
     }
 
-    // Check for mixed strategy first
-    if (range.mixed) {
-        const mixedEntry = range.mixed.find(m => m.category === handCategory);
-        if (mixedEntry) {
-            return {
-                action: 'mixed',
-                isMixed: true,
-                mixedData: mixedEntry
-            };
+    // Fallback-Mapping für Kategorien die nicht explizit in der Range sind
+    // underpair_high verhält sich ähnlich wie second_pair
+    // underpair_low verhält sich ähnlich wie low_pair
+    const categoryFallbacks = {
+        'underpair_high': 'second_pair',
+        'underpair_low': 'low_pair'
+    };
+
+    // Funktion um Kategorie oder Fallback zu finden
+    const findInArray = (arr, category) => {
+        if (!arr) return false;
+        if (arr.includes(category)) return true;
+        if (categoryFallbacks[category] && arr.includes(categoryFallbacks[category])) return true;
+        return false;
+    };
+
+    const findMixed = (mixedArr, category) => {
+        if (!mixedArr) return null;
+        let entry = mixedArr.find(m => m.category === category);
+        if (!entry && categoryFallbacks[category]) {
+            entry = mixedArr.find(m => m.category === categoryFallbacks[category]);
         }
+        return entry;
+    };
+
+    // Check for mixed strategy first
+    const mixedEntry = findMixed(range.mixed, handCategory);
+    if (mixedEntry) {
+        return {
+            action: 'mixed',
+            isMixed: true,
+            mixedData: mixedEntry
+        };
     }
 
     // Check definitive actions
     if (currentMode === 'cbet') {
-        if (range.cbet && range.cbet.includes(handCategory)) {
+        if (findInArray(range.cbet, handCategory)) {
             return { action: 'cbet', isMixed: false };
         }
-        if (range.check && range.check.includes(handCategory)) {
+        if (findInArray(range.check, handCategory)) {
             return { action: 'check', isMixed: false };
         }
     } else {
-        if (range.raise && range.raise.includes(handCategory)) {
+        if (findInArray(range.raise, handCategory)) {
             return { action: 'raise', isMixed: false };
         }
-        if (range.call && range.call.includes(handCategory)) {
+        if (findInArray(range.call, handCategory)) {
             return { action: 'call', isMixed: false };
         }
-        if (range.fold && range.fold.includes(handCategory)) {
+        if (findInArray(range.fold, handCategory)) {
             return { action: 'fold', isMixed: false };
         }
     }
