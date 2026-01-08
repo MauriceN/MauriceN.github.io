@@ -5,9 +5,17 @@
 // HAND-KATEGORIEN
 // ============================================
 // Die Hand + Board wird zu einer Kategorie evaluiert:
+// - straight_flush: Straight Flush (5 aufeinanderfolgende + gleiche Farbe)
+// - quads: Vierling (4 gleiche Karten)
+// - flush: Flush (5 Karten gleiche Farbe)
+// - straight: Straße (5 aufeinanderfolgende Karten)
+// - full_house: Full House (Drilling + Paar)
+// - trips: Trips (Hero trifft Board-Pair)
 // - set: Drilling (Pocket Pair trifft Board)
 // - two_pair: Zwei Paare
 // - overpair: Pocket Pair > höchste Board-Karte
+// - underpair_high: Pocket Pair zwischen höchster und zweithöchster Board-Karte (z.B. JJ auf Q62)
+// - underpair_low: Pocket Pair unter zweithöchster Board-Karte (z.B. 55 auf Q62)
 // - top_pair_good: Top Pair mit Kicker T+
 // - top_pair_weak: Top Pair mit Kicker < T
 // - second_pair: Zweithöchstes Paar
@@ -33,12 +41,15 @@ const CBET_RANGES = {
         // BTN hat Range Advantage -> viel C-Bet
         dry: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair', 'overpair',
                 'top_pair_good', 'top_pair_weak',
                 'flush_draw', 'oesd'
             ],
             check: ['low_pair', 'nothing'],
             mixed: [
+                { category: 'underpair_high', cbet: 0.6, check: 0.4 },
+                { category: 'underpair_low', cbet: 0.35, check: 0.65 },
                 { category: 'second_pair', cbet: 0.6, check: 0.4 },
                 { category: 'gutshot', cbet: 0.7, check: 0.3 },
                 { category: 'overcards', cbet: 0.65, check: 0.35 },
@@ -50,6 +61,7 @@ const CBET_RANGES = {
         // Mehr Caution, weniger C-Bet
         wet: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair', 'overpair',
                 'top_pair_good', 'flush_draw', 'oesd'
             ],
@@ -68,6 +80,7 @@ const CBET_RANGES = {
         // Polarisiert: starke Hände und Bluffs
         paired: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair', 'overpair',
                 'top_pair_good'
             ],
@@ -87,6 +100,7 @@ const CBET_RANGES = {
         // Sehr vorsichtig, wenig C-Bet
         monotone: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair', 'flush_draw'
             ],
             check: [
@@ -105,6 +119,7 @@ const CBET_RANGES = {
         // Sehr vorsichtig, Range Disadvantage für PFR
         connected: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair'
             ],
             check: [
@@ -128,6 +143,7 @@ const CBET_RANGES = {
     CO_vs_BB: {
         dry: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair', 'overpair',
                 'top_pair_good', 'top_pair_weak',
                 'flush_draw', 'oesd'
@@ -142,6 +158,7 @@ const CBET_RANGES = {
         },
         wet: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair', 'overpair',
                 'top_pair_good', 'flush_draw', 'oesd'
             ],
@@ -155,7 +172,7 @@ const CBET_RANGES = {
             ]
         },
         paired: {
-            cbet: ['set', 'two_pair', 'overpair', 'top_pair_good'],
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good'],
             check: ['second_pair', 'low_pair', 'nothing'],
             mixed: [
                 { category: 'top_pair_weak', cbet: 0.55, check: 0.45 },
@@ -166,7 +183,7 @@ const CBET_RANGES = {
             ]
         },
         monotone: {
-            cbet: ['set', 'two_pair', 'flush_draw'],
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw'],
             check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'overpair', cbet: 0.55, check: 0.45 },
@@ -176,7 +193,7 @@ const CBET_RANGES = {
             ]
         },
         connected: {
-            cbet: ['set', 'two_pair'],
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
             check: ['second_pair', 'low_pair', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'overpair', cbet: 0.45, check: 0.55 },
@@ -197,6 +214,7 @@ const CBET_RANGES = {
         // SB hat Position Disadvantage -> weniger aggro
         dry: {
             cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
                 'set', 'two_pair', 'overpair',
                 'top_pair_good', 'flush_draw'
             ],
@@ -210,7 +228,7 @@ const CBET_RANGES = {
             ]
         },
         wet: {
-            cbet: ['set', 'two_pair', 'overpair', 'flush_draw', 'oesd'],
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'flush_draw', 'oesd'],
             check: ['low_pair', 'gutshot', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'top_pair_good', cbet: 0.55, check: 0.45 },
@@ -220,7 +238,7 @@ const CBET_RANGES = {
             ]
         },
         paired: {
-            cbet: ['set', 'two_pair', 'overpair'],
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
             check: ['second_pair', 'low_pair', 'gutshot', 'nothing'],
             mixed: [
                 { category: 'top_pair_good', cbet: 0.55, check: 0.45 },
@@ -232,7 +250,7 @@ const CBET_RANGES = {
             ]
         },
         monotone: {
-            cbet: ['set', 'two_pair', 'flush_draw'],
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw'],
             check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'overpair', cbet: 0.45, check: 0.55 },
@@ -242,7 +260,7 @@ const CBET_RANGES = {
             ]
         },
         connected: {
-            cbet: ['set', 'two_pair'],
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
             check: ['second_pair', 'low_pair', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'overpair', cbet: 0.4, check: 0.6 },
@@ -268,7 +286,7 @@ const FACING_CBET_RANGES = {
     // ========================================
     BB_vs_BTN: {
         dry: {
-            raise: ['set', 'two_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
                 'second_pair', 'flush_draw', 'oesd'
@@ -282,7 +300,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         wet: {
-            raise: ['set', 'two_pair', 'flush_draw', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
                 'second_pair'
@@ -295,7 +313,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         paired: {
-            raise: ['set'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
             call: [
                 'two_pair', 'overpair', 'top_pair_good',
                 'flush_draw', 'oesd'
@@ -309,7 +327,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         monotone: {
-            raise: ['flush_draw'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
             call: [
                 'set', 'two_pair', 'overpair',
                 'top_pair_good', 'oesd'
@@ -323,7 +341,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['set', 'two_pair', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
                 'second_pair', 'flush_draw'
@@ -342,7 +360,7 @@ const FACING_CBET_RANGES = {
     // ========================================
     BB_vs_CO: {
         dry: {
-            raise: ['set', 'two_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
                 'second_pair', 'flush_draw', 'oesd'
@@ -356,7 +374,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         wet: {
-            raise: ['set', 'two_pair', 'flush_draw', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
             call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair'],
             fold: ['ace_high', 'nothing'],
             mixed: [
@@ -366,7 +384,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         paired: {
-            raise: ['set'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
             call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
             fold: ['low_pair', 'ace_high', 'nothing'],
             mixed: [
@@ -377,7 +395,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         monotone: {
-            raise: ['flush_draw'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
             call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
             fold: ['low_pair', 'ace_high', 'nothing'],
             mixed: [
@@ -388,7 +406,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['set', 'two_pair', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
             call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw'],
             fold: ['ace_high', 'nothing'],
             mixed: [
@@ -405,7 +423,7 @@ const FACING_CBET_RANGES = {
     BB_vs_SB: {
         // BB hat Position -> kann mehr defenden
         dry: {
-            raise: ['set', 'two_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
                 'second_pair', 'flush_draw', 'oesd', 'gutshot'
@@ -418,7 +436,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         wet: {
-            raise: ['set', 'two_pair', 'flush_draw', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
             call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'gutshot'],
             fold: ['nothing'],
             mixed: [
@@ -428,7 +446,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         paired: {
-            raise: ['set'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
             call: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'flush_draw', 'oesd'],
             fold: ['nothing'],
             mixed: [
@@ -440,7 +458,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         monotone: {
-            raise: ['flush_draw'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
             call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
             fold: ['nothing'],
             mixed: [
@@ -453,7 +471,7 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['set', 'two_pair', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
             call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'gutshot'],
             fold: ['nothing'],
             mixed: [
@@ -469,9 +487,17 @@ const FACING_CBET_RANGES = {
 // HAND STRENGTH VALUES (für EV-Berechnung)
 // ============================================
 const HAND_CATEGORY_VALUES = {
+    'straight_flush': 100,
+    'quads': 99,
+    'flush': 97,
+    'straight': 96,
+    'full_house': 98,
+    'trips': 90,
     'set': 95,
     'two_pair': 85,
     'overpair': 80,
+    'underpair_high': 55,
+    'underpair_low': 40,
     'top_pair_good': 70,
     'top_pair_weak': 60,
     'second_pair': 45,
