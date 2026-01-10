@@ -272,6 +272,145 @@ const CBET_RANGES = {
                 { category: 'overcards', cbet: 0.35, check: 0.65 }
             ]
         }
+    },
+
+    // ========================================
+    // CO vs BTN (CO öffnet, BTN callt)
+    // BTN hat Position + stärkere Range als BB
+    // ========================================
+    CO_vs_BTN: {
+        dry: {
+            cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                'set', 'two_pair', 'overpair', 'top_pair_good'
+            ],
+            check: ['low_pair', 'gutshot', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'top_pair_weak', cbet: 0.5, check: 0.5 },
+                { category: 'second_pair', cbet: 0.35, check: 0.65 },
+                { category: 'flush_draw', cbet: 0.6, check: 0.4 },
+                { category: 'oesd', cbet: 0.55, check: 0.45 },
+                { category: 'overcards', cbet: 0.4, check: 0.6 }
+            ]
+        },
+        wet: {
+            cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                'set', 'two_pair', 'overpair'
+            ],
+            check: ['low_pair', 'gutshot', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'top_pair_good', cbet: 0.55, check: 0.45 },
+                { category: 'top_pair_weak', cbet: 0.35, check: 0.65 },
+                { category: 'second_pair', cbet: 0.2, check: 0.8 },
+                { category: 'flush_draw', cbet: 0.5, check: 0.5 },
+                { category: 'oesd', cbet: 0.45, check: 0.55 },
+                { category: 'overcards', cbet: 0.25, check: 0.75 }
+            ]
+        },
+        paired: {
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+            check: ['second_pair', 'low_pair', 'gutshot', 'nothing'],
+            mixed: [
+                { category: 'top_pair_good', cbet: 0.5, check: 0.5 },
+                { category: 'top_pair_weak', cbet: 0.35, check: 0.65 },
+                { category: 'flush_draw', cbet: 0.4, check: 0.6 },
+                { category: 'oesd', cbet: 0.3, check: 0.7 },
+                { category: 'overcards', cbet: 0.35, check: 0.65 },
+                { category: 'ace_high', cbet: 0.3, check: 0.7 }
+            ]
+        },
+        monotone: {
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw'],
+            check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'overpair', cbet: 0.4, check: 0.6 },
+                { category: 'top_pair_good', cbet: 0.35, check: 0.65 },
+                { category: 'top_pair_weak', cbet: 0.2, check: 0.8 },
+                { category: 'oesd', cbet: 0.25, check: 0.75 }
+            ]
+        },
+        connected: {
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            check: ['second_pair', 'low_pair', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'overpair', cbet: 0.35, check: 0.65 },
+                { category: 'top_pair_good', cbet: 0.4, check: 0.6 },
+                { category: 'top_pair_weak', cbet: 0.2, check: 0.8 },
+                { category: 'flush_draw', cbet: 0.45, check: 0.55 },
+                { category: 'oesd', cbet: 0.35, check: 0.65 },
+                { category: 'gutshot', cbet: 0.25, check: 0.75 },
+                { category: 'overcards', cbet: 0.3, check: 0.7 }
+            ]
+        }
+    },
+
+    // ========================================
+    // BTN vs SB (BTN öffnet, SB callt)
+    // SB hat keine Position, aber tightere Range
+    // ========================================
+    BTN_vs_SB: {
+        dry: {
+            cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                'set', 'two_pair', 'overpair', 'top_pair_good', 'top_pair_weak',
+                'flush_draw', 'oesd'
+            ],
+            check: ['low_pair', 'nothing'],
+            mixed: [
+                { category: 'second_pair', cbet: 0.55, check: 0.45 },
+                { category: 'gutshot', cbet: 0.6, check: 0.4 },
+                { category: 'overcards', cbet: 0.55, check: 0.45 },
+                { category: 'ace_high', cbet: 0.45, check: 0.55 }
+            ]
+        },
+        wet: {
+            cbet: [
+                'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                'set', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'
+            ],
+            check: ['low_pair', 'gutshot', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'top_pair_weak', cbet: 0.5, check: 0.5 },
+                { category: 'second_pair', cbet: 0.3, check: 0.7 },
+                { category: 'overcards', cbet: 0.35, check: 0.65 }
+            ]
+        },
+        paired: {
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good'],
+            check: ['second_pair', 'low_pair', 'nothing'],
+            mixed: [
+                { category: 'top_pair_weak', cbet: 0.55, check: 0.45 },
+                { category: 'flush_draw', cbet: 0.5, check: 0.5 },
+                { category: 'oesd', cbet: 0.4, check: 0.6 },
+                { category: 'gutshot', cbet: 0.35, check: 0.65 },
+                { category: 'overcards', cbet: 0.45, check: 0.55 },
+                { category: 'ace_high', cbet: 0.4, check: 0.6 }
+            ]
+        },
+        monotone: {
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw'],
+            check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'overpair', cbet: 0.5, check: 0.5 },
+                { category: 'top_pair_good', cbet: 0.45, check: 0.55 },
+                { category: 'top_pair_weak', cbet: 0.25, check: 0.75 },
+                { category: 'oesd', cbet: 0.35, check: 0.65 }
+            ]
+        },
+        connected: {
+            cbet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            check: ['second_pair', 'low_pair', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'overpair', cbet: 0.45, check: 0.55 },
+                { category: 'top_pair_good', cbet: 0.5, check: 0.5 },
+                { category: 'top_pair_weak', cbet: 0.3, check: 0.7 },
+                { category: 'flush_draw', cbet: 0.55, check: 0.45 },
+                { category: 'oesd', cbet: 0.45, check: 0.55 },
+                { category: 'gutshot', cbet: 0.35, check: 0.65 },
+                { category: 'overcards', cbet: 0.4, check: 0.6 }
+            ]
+        }
     }
 };
 
@@ -480,6 +619,198 @@ const FACING_CBET_RANGES = {
                 { category: 'ace_high', call: 0.3, fold: 0.7 }
             ]
         }
+    },
+
+    // ========================================
+    // BTN vs CO C-Bet (BTN callt CO's Open)
+    // BTN hat Position + starke Calling Range
+    // ========================================
+    BTN_vs_CO: {
+        dry: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            call: [
+                'overpair', 'top_pair_good', 'top_pair_weak',
+                'second_pair', 'flush_draw', 'oesd', 'gutshot'
+            ],
+            fold: ['nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.55, fold: 0.45 },
+                { category: 'overcards', call: 0.5, fold: 0.5 },
+                { category: 'ace_high', call: 0.4, fold: 0.6 }
+            ]
+        },
+        wet: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'gutshot'],
+            fold: ['nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.5, fold: 0.5 },
+                { category: 'overcards', call: 0.45, fold: 0.55 },
+                { category: 'ace_high', call: 0.35, fold: 0.65 }
+            ]
+        },
+        paired: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'flush_draw', 'oesd'],
+            fold: ['nothing'],
+            mixed: [
+                { category: 'second_pair', call: 0.65, fold: 0.35 },
+                { category: 'low_pair', call: 0.45, fold: 0.55 },
+                { category: 'gutshot', call: 0.55, fold: 0.45 },
+                { category: 'overcards', call: 0.5, fold: 0.5 },
+                { category: 'ace_high', call: 0.4, fold: 0.6 }
+            ]
+        },
+        monotone: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
+            fold: ['nothing'],
+            mixed: [
+                { category: 'top_pair_weak', call: 0.7, fold: 0.3 },
+                { category: 'second_pair', call: 0.55, fold: 0.45 },
+                { category: 'low_pair', call: 0.35, fold: 0.65 },
+                { category: 'gutshot', call: 0.45, fold: 0.55 },
+                { category: 'overcards', call: 0.35, fold: 0.65 },
+                { category: 'ace_high', call: 0.25, fold: 0.75 }
+            ]
+        },
+        connected: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'gutshot'],
+            fold: ['nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.55, fold: 0.45 },
+                { category: 'overcards', call: 0.45, fold: 0.55 },
+                { category: 'ace_high', call: 0.35, fold: 0.65 }
+            ]
+        }
+    },
+
+    // ========================================
+    // BTN vs HJ C-Bet (BTN callt HJ's Open)
+    // BTN hat Position, HJ hat stärkere Range
+    // ========================================
+    BTN_vs_HJ: {
+        dry: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            call: [
+                'overpair', 'top_pair_good', 'top_pair_weak',
+                'second_pair', 'flush_draw', 'oesd'
+            ],
+            fold: ['nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.45, fold: 0.55 },
+                { category: 'gutshot', call: 0.55, fold: 0.45 },
+                { category: 'overcards', call: 0.4, fold: 0.6 },
+                { category: 'ace_high', call: 0.3, fold: 0.7 }
+            ]
+        },
+        wet: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair'],
+            fold: ['ace_high', 'nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.4, fold: 0.6 },
+                { category: 'gutshot', call: 0.55, fold: 0.45 },
+                { category: 'overcards', call: 0.35, fold: 0.65 }
+            ]
+        },
+        paired: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
+            fold: ['low_pair', 'nothing'],
+            mixed: [
+                { category: 'top_pair_weak', call: 0.7, fold: 0.3 },
+                { category: 'second_pair', call: 0.55, fold: 0.45 },
+                { category: 'gutshot', call: 0.5, fold: 0.5 },
+                { category: 'overcards', call: 0.4, fold: 0.6 },
+                { category: 'ace_high', call: 0.3, fold: 0.7 }
+            ]
+        },
+        monotone: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
+            fold: ['low_pair', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'top_pair_weak', call: 0.6, fold: 0.4 },
+                { category: 'second_pair', call: 0.45, fold: 0.55 },
+                { category: 'gutshot', call: 0.4, fold: 0.6 },
+                { category: 'overcards', call: 0.3, fold: 0.7 }
+            ]
+        },
+        connected: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw'],
+            fold: ['ace_high', 'nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.45, fold: 0.55 },
+                { category: 'gutshot', call: 0.6, fold: 0.4 },
+                { category: 'overcards', call: 0.4, fold: 0.6 }
+            ]
+        }
+    },
+
+    // ========================================
+    // CO vs HJ C-Bet (CO callt HJ's Open)
+    // CO hat Position, aber tightere Calling Range
+    // ========================================
+    CO_vs_HJ: {
+        dry: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            call: [
+                'overpair', 'top_pair_good', 'top_pair_weak',
+                'second_pair', 'flush_draw', 'oesd'
+            ],
+            fold: ['nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.4, fold: 0.6 },
+                { category: 'gutshot', call: 0.5, fold: 0.5 },
+                { category: 'overcards', call: 0.35, fold: 0.65 },
+                { category: 'ace_high', call: 0.25, fold: 0.75 }
+            ]
+        },
+        wet: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair'],
+            fold: ['ace_high', 'nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.35, fold: 0.65 },
+                { category: 'gutshot', call: 0.5, fold: 0.5 },
+                { category: 'overcards', call: 0.3, fold: 0.7 }
+            ]
+        },
+        paired: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
+            fold: ['low_pair', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'top_pair_weak', call: 0.65, fold: 0.35 },
+                { category: 'second_pair', call: 0.5, fold: 0.5 },
+                { category: 'gutshot', call: 0.45, fold: 0.55 },
+                { category: 'overcards', call: 0.35, fold: 0.65 }
+            ]
+        },
+        monotone: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
+            fold: ['low_pair', 'ace_high', 'nothing'],
+            mixed: [
+                { category: 'top_pair_weak', call: 0.55, fold: 0.45 },
+                { category: 'second_pair', call: 0.4, fold: 0.6 },
+                { category: 'gutshot', call: 0.35, fold: 0.65 },
+                { category: 'overcards', call: 0.25, fold: 0.75 }
+            ]
+        },
+        connected: {
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw'],
+            fold: ['ace_high', 'nothing'],
+            mixed: [
+                { category: 'low_pair', call: 0.4, fold: 0.6 },
+                { category: 'gutshot', call: 0.55, fold: 0.45 },
+                { category: 'overcards', call: 0.35, fold: 0.65 }
+            ]
+        }
     }
 };
 
@@ -541,8 +872,890 @@ const TEXTURE_INFO = {
     }
 };
 
+// ============================================
+// TURN BARREL RANGES (Hero hat am Flop c-bettet, Villain callt)
+// ============================================
+// Format: Position_vs_Caller -> FlopTexture -> TurnBrought -> { barrel, check, mixed }
+// TurnBrought: blank, flush_completing, straight_completing, pairing, connected
+
+const TURN_BARREL_RANGES = {
+    // ========================================
+    // BTN vs BB Turn Barrels
+    // ========================================
+    BTN_vs_BB: {
+        // Dry Flop Textures
+        dry: {
+            blank: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.6, check: 0.4 },
+                    { category: 'overcards', barrel: 0.5, check: 0.5 },
+                    { category: 'ace_high', barrel: 0.4, check: 0.6 }
+                ]
+            },
+            flush_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'flush_draw', barrel: 0.7, check: 0.3 }
+                ]
+            },
+            straight_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', barrel: 0.45, check: 0.55 },
+                    { category: 'flush_draw', barrel: 0.6, check: 0.4 },
+                    { category: 'oesd', barrel: 0.55, check: 0.45 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            pairing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair', 'top_pair_good'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.55, check: 0.45 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.4, check: 0.6 }
+                ]
+            },
+            connected: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', barrel: 0.55, check: 0.45 },
+                    { category: 'top_pair_weak', barrel: 0.4, check: 0.6 },
+                    { category: 'flush_draw', barrel: 0.6, check: 0.4 },
+                    { category: 'oesd', barrel: 0.55, check: 0.45 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            }
+        },
+        // Wet Flop Textures
+        wet: {
+            blank: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.5, check: 0.5 },
+                    { category: 'overcards', barrel: 0.4, check: 0.6 }
+                ]
+            },
+            flush_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.6, check: 0.4 },
+                    { category: 'flush_draw', barrel: 0.8, check: 0.2 }
+                ]
+            },
+            straight_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.55, check: 0.45 },
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.55, check: 0.45 },
+                    { category: 'oesd', barrel: 0.5, check: 0.5 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            pairing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', barrel: 0.55, check: 0.45 },
+                    { category: 'top_pair_weak', barrel: 0.4, check: 0.6 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            connected: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_weak', barrel: 0.3, check: 0.7 },
+                    { category: 'flush_draw', barrel: 0.55, check: 0.45 },
+                    { category: 'oesd', barrel: 0.5, check: 0.5 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            }
+        },
+        // Paired Flop Textures
+        paired: {
+            blank: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair', 'top_pair_good'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.55, check: 0.45 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.45, check: 0.55 },
+                    { category: 'ace_high', barrel: 0.4, check: 0.6 }
+                ]
+            },
+            flush_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'flush_draw', barrel: 0.75, check: 0.25 }
+                ]
+            },
+            straight_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            pairing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.6, check: 0.4 },
+                    { category: 'overpair', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_weak', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            connected: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_weak', barrel: 0.3, check: 0.7 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            }
+        },
+        // Monotone Flop Textures
+        monotone: {
+            blank: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'flush_draw'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', barrel: 0.45, check: 0.55 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['straight', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'flush_draw', barrel: 0.9, check: 0.1 }
+                ]
+            },
+            straight_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'flush_draw'
+                ],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 }
+                ]
+            },
+            pairing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'flush_draw'
+                ],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 }
+                ]
+            },
+            connected: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'flush_draw'
+                ],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 }
+                ]
+            }
+        },
+        // Connected Flop Textures
+        connected: {
+            blank: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'flush_draw', 'oesd'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', barrel: 0.35, check: 0.65 },
+                    { category: 'overcards', barrel: 0.4, check: 0.6 }
+                ]
+            },
+            flush_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'flush_draw', barrel: 0.8, check: 0.2 }
+                ]
+            },
+            straight_completing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'overpair', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_good', barrel: 0.3, check: 0.7 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            },
+            pairing: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_weak', barrel: 0.3, check: 0.7 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            connected: {
+                barrel: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            }
+        }
+    },
+
+    // ========================================
+    // CO vs BB Turn Barrels (ähnlich zu BTN, etwas tighter)
+    // ========================================
+    CO_vs_BB: {
+        dry: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.55, check: 0.45 },
+                    { category: 'overcards', barrel: 0.45, check: 0.55 },
+                    { category: 'ace_high', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.65, check: 0.35 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'flush_draw', barrel: 0.55, check: 0.45 },
+                    { category: 'oesd', barrel: 0.5, check: 0.5 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.5, check: 0.5 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.55, check: 0.45 },
+                    { category: 'oesd', barrel: 0.5, check: 0.5 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            }
+        },
+        wet: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.55, check: 0.45 },
+                    { category: 'flush_draw', barrel: 0.75, check: 0.25 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'overpair', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_good', barrel: 0.3, check: 0.7 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.5, check: 0.5 },
+                    { category: 'oesd', barrel: 0.45, check: 0.55 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            }
+        },
+        paired: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.5, check: 0.5 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.4, check: 0.6 },
+                    { category: 'ace_high', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'flush_draw', barrel: 0.7, check: 0.3 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'overpair', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_good', barrel: 0.3, check: 0.7 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.55, check: 0.45 },
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_weak', barrel: 0.3, check: 0.7 },
+                    { category: 'flush_draw', barrel: 0.4, check: 0.6 },
+                    { category: 'oesd', barrel: 0.35, check: 0.65 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            }
+        },
+        monotone: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['straight', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'flush_draw', barrel: 0.85, check: 0.15 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.4, check: 0.6 }
+                ]
+            }
+        },
+        connected: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_weak', barrel: 0.3, check: 0.7 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'flush_draw', barrel: 0.75, check: 0.25 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.4, check: 0.6 },
+                    { category: 'overpair', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_good', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.2, check: 0.8 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'overpair', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_good', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_weak', barrel: 0.2, check: 0.8 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            }
+        }
+    },
+
+    // ========================================
+    // SB vs BB Turn Barrels (OOP, vorsichtiger)
+    // ========================================
+    SB_vs_BB: {
+        dry: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.5, check: 0.5 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'flush_draw', barrel: 0.6, check: 0.4 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.4, check: 0.6 },
+                    { category: 'oesd', barrel: 0.35, check: 0.65 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.45, check: 0.55 },
+                    { category: 'oesd', barrel: 0.4, check: 0.6 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            }
+        },
+        wet: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair', 'flush_draw', 'oesd'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', barrel: 0.35, check: 0.65 },
+                    { category: 'overcards', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'flush_draw', barrel: 0.7, check: 0.3 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'overpair', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_good', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.4, check: 0.6 },
+                    { category: 'oesd', barrel: 0.35, check: 0.65 },
+                    { category: 'overcards', barrel: 0.2, check: 0.8 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.45, check: 0.55 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.35, check: 0.65 },
+                    { category: 'oesd', barrel: 0.3, check: 0.7 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'overpair', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_good', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_weak', barrel: 0.2, check: 0.8 },
+                    { category: 'flush_draw', barrel: 0.4, check: 0.6 },
+                    { category: 'oesd', barrel: 0.35, check: 0.65 },
+                    { category: 'overcards', barrel: 0.2, check: 0.8 }
+                ]
+            }
+        },
+        paired: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', barrel: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', barrel: 0.35, check: 0.65 },
+                    { category: 'flush_draw', barrel: 0.4, check: 0.6 },
+                    { category: 'oesd', barrel: 0.35, check: 0.65 },
+                    { category: 'overcards', barrel: 0.35, check: 0.65 },
+                    { category: 'ace_high', barrel: 0.3, check: 0.7 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'flush_draw', barrel: 0.65, check: 0.35 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.4, check: 0.6 },
+                    { category: 'overpair', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_good', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.35, check: 0.65 },
+                    { category: 'oesd', barrel: 0.3, check: 0.7 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.5, check: 0.5 },
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'flush_draw', barrel: 0.3, check: 0.7 },
+                    { category: 'oesd', barrel: 0.25, check: 0.75 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'overpair', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_good', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_weak', barrel: 0.2, check: 0.8 },
+                    { category: 'flush_draw', barrel: 0.35, check: 0.65 },
+                    { category: 'oesd', barrel: 0.3, check: 0.7 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            }
+        },
+        monotone: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.35, check: 0.65 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['straight', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'flush_draw', barrel: 0.8, check: 0.2 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw'],
+                check: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: []
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw'],
+                check: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: []
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw'],
+                check: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: []
+            }
+        },
+        connected: {
+            blank: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', barrel: 0.4, check: 0.6 },
+                    { category: 'top_pair_weak', barrel: 0.25, check: 0.75 },
+                    { category: 'overcards', barrier: 0.3, check: 0.7 }
+                ]
+            },
+            flush_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'flush_draw', barrel: 0.7, check: 0.3 }
+                ]
+            },
+            straight_completing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.35, check: 0.65 },
+                    { category: 'overpair', barrel: 0.25, check: 0.75 },
+                    { category: 'top_pair_good', barrel: 0.2, check: 0.8 },
+                    { category: 'flush_draw', barrel: 0.35, check: 0.65 },
+                    { category: 'oesd', barrel: 0.3, check: 0.7 },
+                    { category: 'overcards', barrel: 0.15, check: 0.85 }
+                ]
+            },
+            pairing: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.45, check: 0.55 },
+                    { category: 'overpair', barrel: 0.35, check: 0.65 },
+                    { category: 'top_pair_good', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_weak', barrel: 0.2, check: 0.8 },
+                    { category: 'flush_draw', barrel: 0.35, check: 0.65 },
+                    { category: 'oesd', barrel: 0.3, check: 0.7 },
+                    { category: 'overcards', barrel: 0.25, check: 0.75 }
+                ]
+            },
+            connected: {
+                barrel: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', barrel: 0.4, check: 0.6 },
+                    { category: 'overpair', barrel: 0.3, check: 0.7 },
+                    { category: 'top_pair_good', barrel: 0.25, check: 0.75 },
+                    { category: 'top_pair_weak', barrel: 0.15, check: 0.85 },
+                    { category: 'flush_draw', barrel: 0.35, check: 0.65 },
+                    { category: 'oesd', barrel: 0.3, check: 0.7 },
+                    { category: 'overcards', barrel: 0.2, check: 0.8 }
+                ]
+            }
+        }
+    },
+
+    // CO_vs_BTN und BTN_vs_SB verwenden ähnliche Strukturen wie oben
+    // Für den Start verwenden wir BTN_vs_BB als Fallback
+    CO_vs_BTN: null, // Wird von Code als Fallback zu BTN_vs_BB behandelt
+    BTN_vs_SB: null  // Wird von Code als Fallback zu BTN_vs_BB behandelt
+};
+
 // Export für postflop.js
 window.CBET_RANGES = CBET_RANGES;
 window.FACING_CBET_RANGES = FACING_CBET_RANGES;
 window.HAND_CATEGORY_VALUES = HAND_CATEGORY_VALUES;
 window.TEXTURE_INFO = TEXTURE_INFO;
+window.TURN_BARREL_RANGES = TURN_BARREL_RANGES;
