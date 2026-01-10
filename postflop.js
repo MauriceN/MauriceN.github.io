@@ -13,8 +13,8 @@ const RANK_VALUES = {
     '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
 };
 
-const CBET_SPOTS = ['BTN_vs_BB', 'CO_vs_BB', 'SB_vs_BB'];
-const FACING_CBET_SPOTS = ['BB_vs_BTN', 'BB_vs_CO', 'BB_vs_SB'];
+const CBET_SPOTS = ['BTN_vs_BB', 'CO_vs_BB', 'SB_vs_BB', 'CO_vs_BTN', 'BTN_vs_SB'];
+const FACING_CBET_SPOTS = ['BB_vs_BTN', 'BB_vs_CO', 'BB_vs_SB', 'BTN_vs_CO', 'BTN_vs_HJ', 'CO_vs_HJ'];
 const TEXTURES = ['dry', 'wet', 'paired', 'monotone', 'connected'];
 
 const HAND_CATEGORY_NAMES = {
@@ -322,6 +322,156 @@ let evGainTotal = 0;
 let evLossTotal = 0;
 let mistakes = [];
 
+// Detaillierte Stats für Schwachstellen-Analyse
+let detailedStats = {
+    cbet: {},      // { "BTN_vs_BB|dry|flush_draw": { total: 10, correct: 7, evLost: 15 } }
+    'facing-cbet': {}
+};
+
+// Fokus-Modus: Trainiert gezielt Schwachstellen
+let focusModeActive = false;
+
+// Turn-State
+let currentStreet = 'flop';        // 'flop' oder 'turn'
+let currentTurnCard = null;        // {rank, suit}
+let turnHandCategory = '';         // Hand-Kategorie mit Turn
+let turnBrought = '';              // 'blank', 'flush_completing', 'straight_completing', 'pairing', 'connected'
+let flopDecision = null;           // 'cbet' oder 'check'
+let turnCorrectActionData = null;  // Korrekte Turn-Aktion
+let turnTransitionTimer = null;    // Timer für Turn-Übergang
+
+// ============================================
+// LOCAL STORAGE
+// ============================================
+
+const STORAGE_KEY = 'postflop-trainer-stats';
+
+function saveToLocalStorage() {
+    const data = {
+        score,
+        evGainTotal,
+        evLossTotal,
+        mistakes: mistakes.slice(0, 20), // Letzten 20 Fehler speichern
+        detailedStats,
+        lastSaved: Date.now()
+    };
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.warn('LocalStorage nicht verfügbar:', e);
+    }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return false;
+
+        const data = JSON.parse(saved);
+
+        // Restore state
+        score = data.score || { correct: 0, total: 0 };
+        evGainTotal = data.evGainTotal || 0;
+        evLossTotal = data.evLossTotal || 0;
+        mistakes = data.mistakes || [];
+        detailedStats = data.detailedStats || { cbet: {}, 'facing-cbet': {} };
+
+        return true;
+    } catch (e) {
+        console.warn('Fehler beim Laden der Stats:', e);
+        return false;
+    }
+}
+
+function resetAllStats() {
+    score = { correct: 0, total: 0 };
+    evGainTotal = 0;
+    evLossTotal = 0;
+    mistakes = [];
+    detailedStats = { cbet: {}, 'facing-cbet': {} };
+
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+        console.warn('LocalStorage nicht verfügbar:', e);
+    }
+
+    updateScoreDisplay();
+    renderMistakes();
+    renderWeaknesses();
+}
+
+function trackDetailedStat(isCorrect, evLost = 0) {
+    const key = `${currentSpot}|${currentTexture}|${currentHandCategory}`;
+    const modeStats = detailedStats[currentMode];
+
+    if (!modeStats[key]) {
+        modeStats[key] = { total: 0, correct: 0, evLost: 0 };
+    }
+
+    modeStats[key].total++;
+    if (isCorrect) {
+        modeStats[key].correct++;
+    } else {
+        modeStats[key].evLost += evLost;
+    }
+}
+
+function getWeaknesses(mode = null, limit = 5) {
+    const targetMode = mode || currentMode;
+    const modeStats = detailedStats[targetMode];
+
+    // Filtere Spots mit mindestens 3 Versuchen und < 80% Erfolgsrate
+    const weaknesses = Object.entries(modeStats)
+        .map(([key, stats]) => {
+            const [spot, texture, category] = key.split('|');
+            const successRate = stats.total > 0 ? stats.correct / stats.total : 1;
+            return {
+                spot,
+                texture,
+                category,
+                total: stats.total,
+                correct: stats.correct,
+                successRate,
+                evLost: stats.evLost
+            };
+        })
+        .filter(w => w.total >= 3 && w.successRate < 0.8)
+        .sort((a, b) => a.successRate - b.successRate)
+        .slice(0, limit);
+
+    return weaknesses;
+}
+
+function toggleFocusMode() {
+    const weaknesses = getWeaknesses();
+
+    if (weaknesses.length === 0 && !focusModeActive) {
+        alert('Keine Schwachstellen erkannt! Spiele mehr Hände um Leaks zu identifizieren.');
+        return;
+    }
+
+    focusModeActive = !focusModeActive;
+
+    // Update UI
+    const btn = document.getElementById('focus-mode-btn');
+    const indicator = document.getElementById('focus-mode-indicator');
+
+    if (btn) {
+        btn.classList.toggle('active', focusModeActive);
+        btn.textContent = focusModeActive ? 'Fokus-Modus beenden' : 'Schwächen trainieren';
+    }
+
+    if (indicator) {
+        indicator.style.display = focusModeActive ? 'block' : 'none';
+    }
+
+    // Starte neues Szenario im Fokus-Modus
+    if (focusModeActive) {
+        nextScenario();
+    }
+}
+
 // ============================================
 // DOM ELEMENTS
 // ============================================
@@ -361,7 +511,8 @@ const elements = {
     evRating: document.getElementById('ev-rating'),
     evGains: document.getElementById('ev-gains'),
     evLosses: document.getElementById('ev-losses'),
-    mistakesList: document.getElementById('mistakes-list')
+    mistakesList: document.getElementById('mistakes-list'),
+    weaknessesList: document.getElementById('weaknesses-list')
 };
 
 // ============================================
@@ -453,6 +604,85 @@ function countConnections(values) {
         }
     }
     return connections;
+}
+
+// ============================================
+// TURN FUNCTIONS
+// ============================================
+
+function dealTurnCard() {
+    // Karten die bereits verwendet wurden
+    const usedCards = [...currentBoard, ...currentHeroHand];
+
+    // Restliches Deck erstellen
+    const remainingDeck = createDeck().filter(card =>
+        !usedCards.some(used => used.rank === card.rank && used.suit === card.suit)
+    );
+
+    // Eine Karte ziehen
+    const shuffled = shuffleDeck(remainingDeck);
+    currentTurnCard = shuffled[0];
+    currentBoard.push(currentTurnCard);
+
+    return currentTurnCard;
+}
+
+function identifyTurnBrought(board4) {
+    if (board4.length < 4) return 'blank';
+
+    const flop = board4.slice(0, 3);
+    const turn = board4[3];
+    const turnValue = RANK_VALUES[turn.rank];
+
+    // Zähle Farben auf dem Flop
+    const flopSuitCounts = {};
+    flop.forEach(c => {
+        flopSuitCounts[c.suit] = (flopSuitCounts[c.suit] || 0) + 1;
+    });
+
+    // Check: Turn komplettiert Flush Draw (3 gleiche Farben auf Turn)
+    if (flopSuitCounts[turn.suit] === 2) {
+        return 'flush_completing';
+    }
+
+    // Check: Turn pairt das Board
+    if (flop.some(c => c.rank === turn.rank)) {
+        return 'pairing';
+    }
+
+    // Check: Turn komplettiert Straight
+    const allValues = board4.map(c => RANK_VALUES[c.rank]);
+    if (checkStraightPossible(allValues)) {
+        return 'straight_completing';
+    }
+
+    // Check: Turn ist connected zum Board
+    const flopValues = flop.map(c => RANK_VALUES[c.rank]);
+    const minGap = Math.min(...flopValues.map(v => Math.abs(v - turnValue)));
+    if (minGap <= 2 && minGap > 0) {
+        return 'connected';
+    }
+
+    return 'blank';
+}
+
+function checkStraightPossible(values) {
+    // Prüfe ob 4 Karten eine Straight ermöglichen
+    const unique = [...new Set(values)].sort((a, b) => a - b);
+
+    // Ace kann auch low sein
+    if (unique.includes(14)) {
+        unique.unshift(1);
+    }
+
+    // Suche nach 4 Karten mit max 4 Lücke (Straight möglich mit 1 Karte)
+    for (let i = 0; i <= unique.length - 4; i++) {
+        const span = unique[i + 3] - unique[i];
+        if (span <= 4) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // ============================================
@@ -777,14 +1007,13 @@ function getActiveTextures() {
 
 function getActiveSpots() {
     const spots = currentMode === 'cbet' ? CBET_SPOTS : FACING_CBET_SPOTS;
-    const prefix = currentMode === 'cbet' ? 'spot-' : 'spot-';
 
     const active = [];
-    spots.forEach(spot => {
-        const id = 'spot-' + spot.toLowerCase().replace('_', '-');
-        const checkbox = document.getElementById(id);
-        if (checkbox && checkbox.checked) {
-            active.push(spot);
+    // Find checkboxes by their value attribute instead of constructing IDs
+    const checkboxes = document.querySelectorAll('.filter-option[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked && spots.includes(checkbox.value)) {
+            active.push(checkbox.value);
         }
     });
     return active.length > 0 ? active : spots;
@@ -816,12 +1045,44 @@ function generateBoardForTexture(targetTexture, deck) {
 }
 
 function nextScenario() {
+    // Cancel pending Turn transition timer
+    if (turnTransitionTimer) {
+        clearTimeout(turnTransitionTimer);
+        turnTransitionTimer = null;
+    }
+
+    // Reset Turn State
+    currentStreet = 'flop';
+    currentTurnCard = null;
+    turnHandCategory = '';
+    turnBrought = '';
+    flopDecision = null;
+    turnCorrectActionData = null;
+
     // Reset UI
     elements.feedback.classList.remove('show', 'correct', 'wrong');
     elements.nextBtn.classList.remove('show');
     setActionButtonsEnabled(true);
+    resetTurnUI();
 
-    // Generate new scenario
+    // Fokus-Modus: Gezielt Schwachstellen trainieren
+    if (focusModeActive) {
+        generateFocusScenario();
+    } else {
+        generateRandomScenario();
+    }
+
+    // Determine correct action
+    correctActionData = determineCorrectAction(currentSpot, currentTexture, currentHandCategory);
+
+    // Update UI
+    renderBoard();
+    renderHeroHand();
+    renderScenario();
+    updateActionButtons();
+}
+
+function generateRandomScenario() {
     const deck = createDeck();
     const shuffledDeck = shuffleDeck(deck);
 
@@ -841,15 +1102,72 @@ function nextScenario() {
 
     // Evaluate hand category
     currentHandCategory = evaluateHandCategory(currentHeroHand, currentBoard);
+}
 
-    // Determine correct action
-    correctActionData = determineCorrectAction(currentSpot, currentTexture, currentHandCategory);
+function generateFocusScenario() {
+    const weaknesses = getWeaknesses(null, 10);
 
-    // Update UI
-    renderBoard();
-    renderHeroHand();
-    renderScenario();
-    updateActionButtons();
+    if (weaknesses.length === 0) {
+        // Keine Schwächen mehr - zurück zum normalen Modus
+        focusModeActive = false;
+        const btn = document.getElementById('focus-mode-btn');
+        if (btn) {
+            btn.classList.remove('active');
+            btn.textContent = 'Schwächen trainieren';
+        }
+        generateRandomScenario();
+        return;
+    }
+
+    // Wähle zufällige Schwäche (gewichtet nach Fehlerrate)
+    const totalWeight = weaknesses.reduce((sum, w) => sum + (1 - w.successRate), 0);
+    let random = Math.random() * totalWeight;
+    let selectedWeakness = weaknesses[0];
+
+    for (const w of weaknesses) {
+        random -= (1 - w.successRate);
+        if (random <= 0) {
+            selectedWeakness = w;
+            break;
+        }
+    }
+
+    // Setze Spot und Texture aus der Schwäche
+    currentSpot = selectedWeakness.spot;
+    currentTexture = selectedWeakness.texture;
+    const targetCategory = selectedWeakness.category;
+
+    // Versuche eine Hand zu generieren die zur Kategorie passt
+    const maxAttempts = 50;
+    let attempts = 0;
+    let found = false;
+
+    while (attempts < maxAttempts && !found) {
+        const deck = createDeck();
+        const shuffledDeck = shuffleDeck(deck);
+
+        // Generate board with target texture
+        currentBoard = generateBoardForTexture(currentTexture, shuffledDeck);
+
+        // Generate hero hand
+        currentHeroHand = dealCards(shuffledDeck, 2);
+
+        // Evaluate hand category
+        currentHandCategory = evaluateHandCategory(currentHeroHand, currentBoard);
+
+        // Check if we hit the target category
+        if (currentHandCategory === targetCategory) {
+            found = true;
+        }
+
+        attempts++;
+    }
+
+    // Falls wir die Kategorie nicht getroffen haben, nehmen wir was wir haben
+    // (Spot und Texture stimmen trotzdem)
+    if (!found) {
+        console.log(`Fokus-Modus: Konnte ${targetCategory} nicht generieren nach ${maxAttempts} Versuchen`);
+    }
 }
 
 // ============================================
@@ -940,8 +1258,20 @@ function setActionButtonsEnabled(enabled) {
 function handleAction(action) {
     if (elements.actionBtns.cbet.disabled) return;
 
+    // Route basierend auf Street
+    if (currentStreet === 'turn') {
+        handleTurnAction(action);
+        return;
+    }
+
+    // Flop Action Handling
+    handleFlopAction(action);
+}
+
+function handleFlopAction(action) {
     setActionButtonsEnabled(false);
     score.total++;
+    flopDecision = action;
 
     let isCorrect = false;
     let isMixedAcceptable = false;
@@ -962,16 +1292,183 @@ function handleAction(action) {
         score.correct++;
         const evGain = calculateEVGain(isMixedAcceptable, mixedFrequency);
         evGainTotal += evGain;
+        trackDetailedStat(true, 0);
+
+        // Bei C-Bet Mode und korrektem C-Bet: Weiter zum Turn
+        if (currentMode === 'cbet' && action === 'cbet') {
+            showFeedback(true, isMixedAcceptable, mixedFrequency, evGain, action);
+            updateScoreDisplay();
+            saveToLocalStorage();
+
+            // Nach kurzer Pause zum Turn (Timer speichern für Cancel)
+            turnTransitionTimer = setTimeout(() => {
+                turnTransitionTimer = null;
+                progressToTurn();
+            }, 1500);
+            return;
+        }
+
         showFeedback(true, isMixedAcceptable, mixedFrequency, evGain, action);
     } else {
         const evLoss = calculateEVLoss(action);
         evLossTotal += evLoss;
+        trackDetailedStat(false, evLoss);
         addMistake(action, evLoss);
         showFeedback(false, false, 0, evLoss, action);
     }
 
     updateScoreDisplay();
+    saveToLocalStorage();
+    renderWeaknesses();
     elements.nextBtn.classList.add('show');
+}
+
+function handleTurnAction(action) {
+    setActionButtonsEnabled(false);
+    score.total++;
+
+    // Mappe 'cbet' auf 'barrel' für Turn
+    const turnAction = action === 'cbet' ? 'barrel' : action;
+
+    let isCorrect = false;
+    let isMixedAcceptable = false;
+    let mixedFrequency = 0;
+
+    if (turnCorrectActionData.isMixed) {
+        const mixedData = turnCorrectActionData.mixedData;
+        if (mixedData[turnAction] && mixedData[turnAction] > 0) {
+            isMixedAcceptable = true;
+            mixedFrequency = mixedData[turnAction];
+            isCorrect = true;
+        }
+    } else {
+        isCorrect = turnAction === turnCorrectActionData.action;
+    }
+
+    if (isCorrect) {
+        score.correct++;
+        const evGain = calculateTurnEVGain(isMixedAcceptable, mixedFrequency);
+        evGainTotal += evGain;
+        trackDetailedStat(true, 0);
+        showTurnFeedback(true, isMixedAcceptable, mixedFrequency, evGain, action);
+    } else {
+        const evLoss = calculateTurnEVLoss(turnAction);
+        evLossTotal += evLoss;
+        trackDetailedStat(false, evLoss);
+        addMistake(turnAction, evLoss);
+        showTurnFeedback(false, false, 0, evLoss, action);
+    }
+
+    updateScoreDisplay();
+    saveToLocalStorage();
+    renderWeaknesses();
+    elements.nextBtn.classList.add('show');
+}
+
+function progressToTurn() {
+    // Reset Feedback
+    elements.feedback.classList.remove('show', 'correct', 'wrong');
+
+    // Wechsel zum Turn
+    currentStreet = 'turn';
+
+    // Turn-Karte ziehen
+    dealTurnCard();
+
+    // Turn-Texture bestimmen
+    turnBrought = identifyTurnBrought(currentBoard);
+
+    // Hand neu evaluieren mit 4 Karten
+    turnHandCategory = evaluateHandCategory(currentHeroHand, currentBoard);
+
+    // Korrekte Turn-Aktion bestimmen
+    turnCorrectActionData = determineTurnCorrectAction();
+
+    // UI aktualisieren
+    renderTurnCard();
+    renderTurnScenario();
+    updateTurnActionButtons();
+    setActionButtonsEnabled(true);
+
+    // Street-Indikator aktualisieren
+    const indicator = document.getElementById('street-indicator');
+    if (indicator) {
+        indicator.querySelector('.street.flop').classList.remove('active');
+        indicator.querySelector('.street.flop').classList.add('completed');
+        indicator.querySelector('.street.turn').classList.add('active');
+    }
+}
+
+function determineTurnCorrectAction() {
+    // Hole Turn Barrel Ranges
+    const turnRanges = window.TURN_BARREL_RANGES;
+    if (!turnRanges) {
+        return { action: 'check', isMixed: false };
+    }
+
+    // Spot mit Fallback (CO_vs_BTN und BTN_vs_SB fallen auf BTN_vs_BB zurück)
+    let spotRanges = turnRanges[currentSpot];
+    if (!spotRanges) {
+        spotRanges = turnRanges['BTN_vs_BB']; // Fallback
+    }
+    if (!spotRanges) {
+        return { action: 'check', isMixed: false };
+    }
+
+    const textureRanges = spotRanges[currentTexture];
+    if (!textureRanges) {
+        return { action: 'check', isMixed: false };
+    }
+
+    const turnTypeRanges = textureRanges[turnBrought] || textureRanges['blank'];
+    if (!turnTypeRanges) {
+        return { action: 'check', isMixed: false };
+    }
+
+    // Prüfe Mixed Strategies
+    if (turnTypeRanges.mixed) {
+        const mixedEntry = turnTypeRanges.mixed.find(m => m.category === turnHandCategory);
+        if (mixedEntry) {
+            return {
+                action: 'mixed',
+                isMixed: true,
+                mixedData: { barrel: mixedEntry.barrel, check: mixedEntry.check }
+            };
+        }
+    }
+
+    // Prüfe definitive Aktionen
+    if (turnTypeRanges.barrel && turnTypeRanges.barrel.includes(turnHandCategory)) {
+        return { action: 'barrel', isMixed: false };
+    }
+    if (turnTypeRanges.check && turnTypeRanges.check.includes(turnHandCategory)) {
+        return { action: 'check', isMixed: false };
+    }
+
+    // Fallback
+    return { action: 'check', isMixed: false };
+}
+
+function calculateTurnEVLoss(userAction) {
+    const baseValue = HAND_CATEGORY_VALUES[turnHandCategory] || 50;
+
+    if (turnCorrectActionData.action === 'barrel' && userAction === 'check') {
+        return Math.round(baseValue * 0.5); // Value verloren
+    }
+    if (turnCorrectActionData.action === 'check' && userAction === 'barrel') {
+        return Math.round(baseValue * 0.7); // Überbluff
+    }
+
+    return Math.round(baseValue * 0.5);
+}
+
+function calculateTurnEVGain(isMixed, mixedFrequency) {
+    const baseValue = HAND_CATEGORY_VALUES[turnHandCategory] || 50;
+
+    if (isMixed) {
+        return Math.round(baseValue * mixedFrequency);
+    }
+    return baseValue;
 }
 
 function calculateEVGain(isMixed, mixedFrequency) {
@@ -1176,6 +1673,219 @@ function renderMistakes() {
     `).join('');
 }
 
+function renderWeaknesses() {
+    const weaknesses = getWeaknesses(null, 5);
+
+    if (weaknesses.length === 0) {
+        elements.weaknessesList.innerHTML = '<p class="no-weaknesses">Spiele mehr Hände um Leaks zu identifizieren</p>';
+        return;
+    }
+
+    elements.weaknessesList.innerHTML = weaknesses.map(w => {
+        const successPercent = Math.round(w.successRate * 100);
+        const failPercent = 100 - successPercent;
+        const categoryName = HAND_CATEGORY_NAMES[w.category] || w.category;
+        const textureName = TEXTURE_INFO?.[w.texture]?.name || w.texture;
+
+        // Formatiere Spot lesbarer (BTN_vs_BB -> BTN vs BB)
+        const spotFormatted = w.spot.replace('_vs_', ' vs ');
+
+        return `
+            <div class="weakness-item">
+                <div class="weakness-header">
+                    <span class="weakness-category">${categoryName}</span>
+                    <span class="weakness-rate ${failPercent > 50 ? 'bad' : 'warning'}">${failPercent}% falsch</span>
+                </div>
+                <div class="weakness-details">
+                    <span class="weakness-spot">${spotFormatted}</span>
+                    <span class="weakness-texture badge ${w.texture}">${textureName}</span>
+                </div>
+                <div class="weakness-stats">
+                    <span>${w.correct}/${w.total} richtig</span>
+                    <span class="weakness-ev-lost">-${w.evLost} EV</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// TURN RENDERING
+// ============================================
+
+function renderTurnCard() {
+    const card = currentTurnCard;
+    const cardEl = document.getElementById('board-card-4');
+
+    if (!cardEl || !card) return;
+
+    // Zeige die 4. Karte
+    cardEl.style.display = 'flex';
+    cardEl.querySelector('.rank').textContent = card.rank;
+    cardEl.querySelector('.suit').textContent = SUIT_SYMBOLS[card.suit];
+
+    // Setze Farbe
+    cardEl.classList.remove('hearts', 'diamonds', 'spades', 'clubs');
+    if (card.suit === 'h') cardEl.classList.add('hearts');
+    else if (card.suit === 'd') cardEl.classList.add('diamonds');
+    else if (card.suit === 's') cardEl.classList.add('spades');
+    else if (card.suit === 'c') cardEl.classList.add('clubs');
+
+    // Animation
+    cardEl.classList.add('deal-animation');
+    setTimeout(() => cardEl.classList.remove('deal-animation'), 500);
+
+    // Update Turn-Texture Badge
+    const turnBadge = document.getElementById('turn-brought-badge');
+    if (turnBadge) {
+        const turnBroughtNames = {
+            'blank': 'Blank',
+            'flush_completing': 'Flush Completing',
+            'straight_completing': 'Straight Completing',
+            'pairing': 'Pairing',
+            'connected': 'Connected'
+        };
+        turnBadge.textContent = turnBroughtNames[turnBrought] || turnBrought;
+        turnBadge.className = 'turn-brought-badge ' + turnBrought;
+        turnBadge.style.display = 'inline-block';
+    }
+
+    // Update Hand-Kategorie (neu bewertet mit 4 Karten)
+    elements.handCategoryBadge.textContent = HAND_CATEGORY_NAMES[turnHandCategory] || turnHandCategory;
+}
+
+function renderTurnScenario() {
+    const [heroPos, , villainPos] = currentSpot.split('_');
+
+    elements.scenarioText.innerHTML = `
+        <strong>Turn:</strong> Du hast am Flop c-bettet, ${villainPos} callt.<br>
+        <small>Barrel oder Check?</small>
+    `;
+}
+
+function updateTurnActionButtons() {
+    // Zeige Barrel und Check Buttons
+    elements.actionBtns.cbet.style.display = 'inline-block';
+    elements.actionBtns.cbet.innerHTML = 'Barrel<span class="keyboard-hint">[B]</span>';
+    elements.actionBtns.check.style.display = 'inline-block';
+    elements.actionBtns.fold.style.display = 'none';
+    elements.actionBtns.call.style.display = 'none';
+    elements.actionBtns.raise.style.display = 'none';
+}
+
+function showTurnFeedback(isCorrect, isMixed, mixedFrequency, evChange, userAction) {
+    elements.feedback.classList.remove('correct', 'wrong');
+    elements.feedback.classList.add('show', isCorrect ? 'correct' : 'wrong');
+
+    // Bestimme die korrekte Aktion
+    const correctAction = turnCorrectActionData.isMixed
+        ? Object.entries(turnCorrectActionData.mixedData)
+            .filter(([k, v]) => k !== 'category' && v > 0)
+            .sort((a, b) => b[1] - a[1])[0][0]
+        : turnCorrectActionData.action;
+
+    // Mappe User-Aktion (cbet -> barrel für Turn)
+    const displayUserAction = userAction === 'cbet' ? 'barrel' : userAction;
+
+    if (isCorrect) {
+        elements.feedbackIcon.textContent = '✓';
+        if (isMixed) {
+            elements.feedbackText.textContent = `Korrekt! (${Math.round(mixedFrequency * 100)}% Frequenz)`;
+            const mixedStr = Object.entries(turnCorrectActionData.mixedData)
+                .filter(([k, v]) => v > 0)
+                .map(([k, v]) => `${Math.round(v * 100)}% ${k}`)
+                .join(' / ');
+            elements.correctAnswer.innerHTML = `Mixed Strategy: ${mixedStr} | <span class="ev-positive">+${evChange} EV</span>`;
+        } else {
+            elements.feedbackText.textContent = 'Richtig!';
+            elements.correctAnswer.innerHTML = `<span class="ev-positive">+${evChange} EV</span>`;
+        }
+        if (elements.explanation) {
+            elements.explanation.innerHTML = '';
+            elements.explanation.style.display = 'none';
+        }
+    } else {
+        elements.feedbackIcon.textContent = '✗';
+        elements.feedbackText.textContent = 'Falsch!';
+
+        const correctActionDisplay = turnCorrectActionData.isMixed
+            ? Object.entries(turnCorrectActionData.mixedData)
+                .filter(([k, v]) => v > 0)
+                .map(([k, v]) => `${Math.round(v * 100)}% ${k}`)
+                .join(' / ')
+            : correctAction.toUpperCase();
+        elements.correctAnswer.innerHTML = `Korrekte Aktion: <strong>${correctActionDisplay}</strong> | <span class="ev-negative">-${evChange} EV</span>`;
+
+        // Turn-spezifische Erklärung
+        if (elements.explanation) {
+            const turnExplanation = getTurnExplanation(displayUserAction, correctAction, turnHandCategory, turnBrought);
+            elements.explanation.innerHTML = turnExplanation;
+            elements.explanation.style.display = 'block';
+        }
+    }
+}
+
+function getTurnExplanation(userAction, correctAction, handCategory, turnType) {
+    const turnTypeNames = {
+        'blank': 'Blank Turn',
+        'flush_completing': 'Flush-Completing Turn',
+        'straight_completing': 'Straight-Completing Turn',
+        'pairing': 'Pairing Turn',
+        'connected': 'Connected Turn'
+    };
+
+    const turnConcepts = {
+        'blank': 'Ein Blank Turn ändert die Board-Texture kaum. Starke Hände können weiter barreln, schwache Hände sollten aufgeben.',
+        'flush_completing': 'Ein Flush-Completing Turn ist gefährlich. Ohne Flush solltest du vorsichtiger sein.',
+        'straight_completing': 'Ein Straight-Completing Turn ermöglicht mehr Made Hands beim Gegner.',
+        'pairing': 'Ein Pairing Turn kann für dich gut sein (Full House) oder schlecht (Trips für Gegner).',
+        'connected': 'Ein Connected Turn erhöht die Anzahl möglicher Straights.'
+    };
+
+    let explanation = `<strong>${turnTypeNames[turnType]}:</strong> ${turnConcepts[turnType]}<br><br>`;
+
+    // Hand-spezifische Erklärung
+    const handName = HAND_CATEGORY_NAMES[handCategory] || handCategory;
+    if (correctAction === 'barrel') {
+        explanation += `<strong>Warum Barrel?</strong> Mit ${handName} hast du genug Value/Equity um weiter zu betten.`;
+    } else {
+        explanation += `<strong>Warum Check?</strong> Mit ${handName} auf diesem Turn ist Check besser - du kontrollierst den Pot.`;
+    }
+
+    return explanation;
+}
+
+function resetTurnUI() {
+    // Verstecke 4. Karte
+    const cardEl = document.getElementById('board-card-4');
+    if (cardEl) {
+        cardEl.style.display = 'none';
+    }
+
+    // Verstecke Turn-Badge
+    const turnBadge = document.getElementById('turn-brought-badge');
+    if (turnBadge) {
+        turnBadge.style.display = 'none';
+    }
+
+    // Reset Street-Indikator
+    const indicator = document.getElementById('street-indicator');
+    if (indicator) {
+        const flopEl = indicator.querySelector('.street.flop');
+        const turnEl = indicator.querySelector('.street.turn');
+        if (flopEl) {
+            flopEl.classList.add('active');
+            flopEl.classList.remove('completed');
+        }
+        if (turnEl) {
+            turnEl.classList.remove('active');
+        }
+    }
+
+    // Reset Button-Label
+    elements.actionBtns.cbet.innerHTML = 'C-Bet<span class="keyboard-hint">[B]</span>';
+}
+
 // ============================================
 // MODE SWITCHING
 // ============================================
@@ -1187,14 +1897,12 @@ function setMode(mode) {
         btn.classList.toggle('active', btn.dataset.mode === mode);
     });
 
-    // Reset score
-    score = { correct: 0, total: 0 };
-    evGainTotal = 0;
-    evLossTotal = 0;
-    mistakes = [];
+    // Stats bleiben erhalten (LocalStorage Persistenz)
+    // Reset nur noch über Reset-Button möglich
 
     updateScoreDisplay();
     renderMistakes();
+    renderWeaknesses();
     nextScenario();
 }
 
@@ -1213,9 +1921,14 @@ function toggleSettings() {
 
 function handleKeyboard(e) {
     // Nach Feedback: Space/Enter für nächste Hand
+    // ABER: Ignorieren wenn auf Turn-Übergang gewartet wird
     if (elements.actionBtns.cbet.disabled) {
         if (e.key === ' ' || e.key === 'Enter') {
             e.preventDefault();
+            // Nicht unterbrechen wenn Turn-Transition läuft
+            if (turnTransitionTimer) {
+                return;
+            }
             nextScenario();
         }
         return;
@@ -1242,6 +1955,15 @@ function handleKeyboard(e) {
 // ============================================
 
 function init() {
+    // Load saved stats from localStorage
+    const hasData = loadFromLocalStorage();
+    if (hasData) {
+        updateScoreDisplay();
+        renderMistakes();
+        renderWeaknesses();
+        console.log('Stats geladen:', score.total, 'Hände gespielt');
+    }
+
     // Mode button listeners
     elements.modeBtns.forEach(btn => {
         btn.addEventListener('click', () => setMode(btn.dataset.mode));
