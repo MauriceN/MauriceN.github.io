@@ -484,6 +484,17 @@ h1 {
     color: #fff;
 }
 
+.action-btn .shortcut {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
 /* Feedback */
 .feedback {
     text-align: center;
@@ -821,6 +832,183 @@ h1 {
     color: #4CAF50;
     padding: 15px;
     font-size: 0.95rem;
+}
+
+/* Weaknesses Panel */
+.weaknesses-panel {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 15px;
+}
+
+.weaknesses-panel h3 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    color: #ffb74d;
+    text-align: center;
+}
+
+.weaknesses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.weakness-item {
+    background: rgba(255, 152, 0, 0.1);
+    border-left: 3px solid #ff9800;
+    border-radius: 0 8px 8px 0;
+    padding: 12px;
+}
+
+.weakness-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.weakness-category {
+    font-weight: bold;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.weakness-rate {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.weakness-rate.bad {
+    background: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}
+
+.weakness-rate.warning {
+    background: rgba(255, 152, 0, 0.3);
+    color: #ff9800;
+}
+
+.weakness-details {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.weakness-mode {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    background: rgba(74, 124, 74, 0.5);
+    border-radius: 4px;
+    color: #c0e0c0;
+}
+
+.weakness-spot {
+    font-size: 0.8rem;
+    color: #a0d0a0;
+}
+
+.weakness-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.weakness-ev-lost {
+    color: #f44336;
+    font-weight: bold;
+}
+
+.no-weaknesses {
+    text-align: center;
+    color: #888;
+    padding: 15px;
+    font-size: 0.85rem;
+}
+
+.no-weaknesses.good {
+    color: #4CAF50;
+}
+
+/* Focus Mode Button */
+.focus-mode-btn {
+    width: 100%;
+    padding: 12px 16px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.focus-mode-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.focus-mode-btn.active {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+}
+
+/* Focus Mode Indicator */
+.focus-mode-indicator {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 87, 34, 0.2) 100%);
+    border: 2px solid #ff9800;
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+    0%, 100% { border-color: #ff9800; }
+    50% { border-color: #ff5722; }
+}
+
+.focus-icon {
+    font-size: 1.2rem;
+}
+
+.focus-text {
+    font-size: 0.9rem;
+    color: #ffb74d;
+    font-weight: 500;
+}
+
+/* Stats Reset */
+.stats-reset {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.reset-btn {
+    background: transparent;
+    border: 1px solid rgba(244, 67, 54, 0.5);
+    color: #f44336;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reset-btn:hover {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: #f44336;
 }
 
 /* Responsive - Tablet */
