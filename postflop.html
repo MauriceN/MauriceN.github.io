@@ -78,6 +78,10 @@
                         <label for="spot-co-bb">CO vs BB</label>
                         <input type="checkbox" class="filter-option" id="spot-sb-bb" value="SB_vs_BB" checked>
                         <label for="spot-sb-bb">SB vs BB</label>
+                        <input type="checkbox" class="filter-option" id="spot-co-btn" value="CO_vs_BTN" checked>
+                        <label for="spot-co-btn">CO vs BTN</label>
+                        <input type="checkbox" class="filter-option" id="spot-btn-sb" value="BTN_vs_SB" checked>
+                        <label for="spot-btn-sb">BTN vs SB</label>
                     </div>
                 </div>
 
@@ -90,7 +94,19 @@
                         <label for="spot-bb-co">BB vs CO</label>
                         <input type="checkbox" class="filter-option" id="spot-bb-sb" value="BB_vs_SB" checked>
                         <label for="spot-bb-sb">BB vs SB</label>
+                        <input type="checkbox" class="filter-option" id="spot-btn-co" value="BTN_vs_CO" checked>
+                        <label for="spot-btn-co">BTN vs CO</label>
+                        <input type="checkbox" class="filter-option" id="spot-btn-hj" value="BTN_vs_HJ" checked>
+                        <label for="spot-btn-hj">BTN vs HJ</label>
+                        <input type="checkbox" class="filter-option" id="spot-co-hj" value="CO_vs_HJ" checked>
+                        <label for="spot-co-hj">CO vs HJ</label>
                     </div>
+                </div>
+
+                <div class="filter-group reset-group">
+                    <h4>Stats</h4>
+                    <button class="reset-btn" onclick="resetAllStats()">Alle Stats zurücksetzen</button>
+                    <p class="reset-hint">Stats werden automatisch gespeichert</p>
                 </div>
             </div>
         </aside>
@@ -103,9 +119,22 @@
                 <button class="mode-btn" data-mode="facing-cbet">Facing C-Bet</button>
             </div>
 
+            <!-- Focus Mode Indicator -->
+            <div class="focus-mode-indicator" id="focus-mode-indicator" style="display: none;">
+                <span class="focus-icon">🎯</span>
+                <span class="focus-text">Fokus-Modus aktiv - Trainiere deine Schwächen</span>
+            </div>
+
+            <!-- Street Indicator -->
+            <div class="street-indicator" id="street-indicator">
+                <span class="street flop active">Flop</span>
+                <span class="street-arrow">→</span>
+                <span class="street turn">Turn</span>
+            </div>
+
             <!-- Card Area -->
             <div class="card-area">
-                <!-- Board (Flop) -->
+                <!-- Board (Flop + Turn) -->
                 <div class="board-section">
                     <div class="board-label">Board</div>
                     <div class="board-cards" id="board-cards">
@@ -121,9 +150,14 @@
                             <span class="rank">?</span>
                             <span class="suit">?</span>
                         </div>
+                        <div class="board-card turn-card" id="board-card-4" style="display: none;">
+                            <span class="rank">?</span>
+                            <span class="suit">?</span>
+                        </div>
                     </div>
                     <div style="text-align: center;">
                         <span class="texture-badge" id="texture-badge">Dry</span>
+                        <span class="turn-brought-badge" id="turn-brought-badge" style="display: none;">Blank</span>
                     </div>
                 </div>
 
@@ -242,6 +276,17 @@
                 <ul class="mistakes-list" id="mistakes-list">
                     <li class="no-mistakes">Noch keine Fehler!</li>
                 </ul>
+            </div>
+
+            <!-- Weaknesses Analysis -->
+            <div class="weaknesses-panel">
+                <h3>Deine Leaks</h3>
+                <div class="weaknesses-list" id="weaknesses-list">
+                    <p class="no-weaknesses">Spiele mehr Hände um Leaks zu identifizieren</p>
+                </div>
+                <button class="focus-mode-btn" id="focus-mode-btn" onclick="toggleFocusMode()">
+                    Schwächen trainieren
+                </button>
             </div>
         </aside>
     </div>
