@@ -604,6 +604,154 @@ body {
     font-size: 0.95rem;
 }
 
+/* Weaknesses Panel */
+.weaknesses-panel {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 15px;
+}
+
+.weaknesses-panel h3 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    color: #ffb74d;
+    text-align: center;
+}
+
+.weaknesses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.weakness-item {
+    background: rgba(255, 152, 0, 0.1);
+    border-left: 3px solid #ff9800;
+    border-radius: 0 8px 8px 0;
+    padding: 12px;
+}
+
+.weakness-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.weakness-category {
+    font-weight: bold;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.weakness-rate {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.weakness-rate.bad {
+    background: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}
+
+.weakness-rate.warning {
+    background: rgba(255, 152, 0, 0.3);
+    color: #ff9800;
+}
+
+.weakness-details {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.weakness-spot {
+    font-size: 0.8rem;
+    color: #a0d0a0;
+}
+
+.weakness-texture {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+}
+
+.weakness-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.weakness-ev-lost {
+    color: #f44336;
+    font-weight: bold;
+}
+
+.no-weaknesses {
+    text-align: center;
+    color: #888;
+    padding: 15px;
+    font-size: 0.85rem;
+}
+
+/* Focus Mode Button */
+.focus-mode-btn {
+    width: 100%;
+    padding: 12px 16px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.focus-mode-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.focus-mode-btn.active {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+}
+
+/* Focus Mode Indicator */
+.focus-mode-indicator {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 87, 34, 0.2) 100%);
+    border: 2px solid #ff9800;
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+    0%, 100% { border-color: #ff9800; }
+    50% { border-color: #ffb74d; }
+}
+
+.focus-icon {
+    font-size: 1.2rem;
+}
+
+.focus-text {
+    color: #ffb74d;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
 /* Texture Legend */
 .texture-legend {
     background: rgba(0,0,0,0.2);
@@ -718,10 +866,138 @@ body {
     color: #fff;
 }
 
+/* Reset Button */
+.reset-group {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(74, 124, 74, 0.3);
+}
+
+.reset-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: rgba(200, 60, 60, 0.2);
+    border: 1px solid #c44;
+    border-radius: 8px;
+    color: #faa;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reset-btn:hover {
+    background: rgba(200, 60, 60, 0.4);
+    color: #fff;
+}
+
+.reset-hint {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 8px;
+    text-align: center;
+}
+
 /* Hand Notation Helper */
 .hand-notation {
     font-family: 'Courier New', monospace;
     font-weight: bold;
+}
+
+/* ============================================
+   TURN STYLES
+   ============================================ */
+
+/* Street Indicator */
+.street-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
+.street {
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 15px;
+    color: #888;
+    transition: all 0.3s;
+}
+
+.street.active {
+    background: #4a7c4a;
+    color: #fff;
+}
+
+.street.completed {
+    background: rgba(76, 175, 80, 0.3);
+    color: #4CAF50;
+}
+
+.street-arrow {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Turn Card */
+.board-card.turn-card {
+    border: 2px solid #ff9800;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+/* Deal Animation */
+@keyframes dealCard {
+    0% {
+        transform: translateY(-50px) rotateY(90deg);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0) rotateY(0);
+        opacity: 1;
+    }
+}
+
+.deal-animation {
+    animation: dealCard 0.5s ease-out;
+}
+
+/* Turn Brought Badge */
+.turn-brought-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    margin-left: 8px;
+}
+
+.turn-brought-badge.blank {
+    background: #78909c;
+    color: #fff;
+}
+
+.turn-brought-badge.flush_completing {
+    background: #42a5f5;
+    color: #fff;
+}
+
+.turn-brought-badge.straight_completing {
+    background: #66bb6a;
+    color: #fff;
+}
+
+.turn-brought-badge.pairing {
+    background: #ab47bc;
+    color: #fff;
+}
+
+.turn-brought-badge.connected {
+    background: #ffb74d;
+    color: #1a1a1a;
 }
 
 /* Responsive - Tablet */
