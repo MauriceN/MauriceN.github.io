@@ -55,6 +55,13 @@
         <div class="mode-selector">
             <button class="mode-btn active" data-mode="rfi">RFI</button>
             <button class="mode-btn" data-mode="3bet">3-Bet</button>
+            <button class="mode-btn" data-mode="facing3bet">vs 3-Bet</button>
+        </div>
+
+        <!-- Focus Mode Indicator -->
+        <div class="focus-mode-indicator" id="focus-mode-indicator" style="display: none;">
+            <span class="focus-icon">🎯</span>
+            <span class="focus-text">Fokus-Modus aktiv - Trainiere deine Schwächen</span>
         </div>
 
         <!-- Card Display Area -->
@@ -70,9 +77,9 @@
 
         <!-- Action Buttons -->
         <div class="actions">
-            <button class="action-btn fold" data-action="fold">Fold</button>
-            <button class="action-btn call" data-action="call" style="display: none;">Call</button>
-            <button class="action-btn raise" data-action="raise">Raise</button>
+            <button class="action-btn fold" data-action="fold">Fold<span class="shortcut">F</span></button>
+            <button class="action-btn call" data-action="call" style="display: none;">Call<span class="shortcut">C</span></button>
+            <button class="action-btn raise" data-action="raise">Raise<span class="shortcut">R</span></button>
         </div>
 
         <!-- Feedback -->
@@ -161,6 +168,22 @@
             <ul class="mistakes-list" id="mistakes-list">
                 <li class="no-mistakes">Noch keine Fehler!</li>
             </ul>
+        </div>
+
+        <!-- Leak Detection / Weaknesses -->
+        <div class="weaknesses-panel">
+            <h3>Deine Leaks</h3>
+            <div class="weaknesses-list" id="weaknesses-list">
+                <p class="no-weaknesses">Spiele mehr Hände um Leaks zu identifizieren</p>
+            </div>
+            <button class="focus-mode-btn" id="focus-mode-btn" onclick="toggleFocusMode()">
+                Schwächen trainieren
+            </button>
+        </div>
+
+        <!-- Stats Reset -->
+        <div class="stats-reset">
+            <button class="reset-btn" onclick="resetAllStats()">Stats zurücksetzen</button>
         </div>
 
         <!-- EV-Loss Legende pro Hand -->
