@@ -398,7 +398,105 @@ const THREEBET_RANGES = {
     }
 };
 
+// Facing 3-Bet Ranges - wie reagieren wir wenn wir öffnen und ge-3-bettet werden?
+// Format: [opener position]_vs_[3bettor position]_3bet -> { fourbet: [...], call: [...], fold: 'rest' }
+const FACING_3BET_RANGES = {
+    // SB öffnet, BB 3-bettet - der wichtigste Spot!
+    SB_vs_BB_3bet: {
+        fourbet: [
+            'AA', 'KK', 'QQ', 'AKs', 'AKo'
+        ],
+        call: [
+            'JJ', 'TT', '99', '88', '77',
+            'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+            'KQs', 'KJs', 'KTs', 'K9s', 'K8s',
+            'QJs', 'QTs', 'Q9s',
+            'JTs', 'J9s',
+            'T9s', 'T8s',
+            '98s', '97s',
+            '87s', '86s',
+            '76s', '75s',
+            '65s', '64s',
+            '54s',
+            'AQo', 'AJo', 'ATo',
+            'KQo', 'KJo'
+        ],
+        mixed: [
+            // Premium Pairs mit 4-bet/call Mix
+            { hand: 'JJ', fourbet: 0.4, call: 0.6 },
+            { hand: 'TT', fourbet: 0.25, call: 0.75 },
+            // Suited Aces als 4-bet Bluffs
+            { hand: 'A5s', fourbet: 0.5, call: 0.5 },
+            { hand: 'A4s', fourbet: 0.4, call: 0.6 },
+            { hand: 'A3s', fourbet: 0.3, call: 0.7 }
+        ],
+        fold: 'rest'
+    },
+
+    // BTN öffnet, SB 3-bettet
+    BTN_vs_SB_3bet: {
+        fourbet: [
+            'AA', 'KK', 'QQ', 'AKs', 'AKo'
+        ],
+        call: [
+            'JJ', 'TT', '99', '88', '77', '66',
+            'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+            'KQs', 'KJs', 'KTs', 'K9s',
+            'QJs', 'QTs', 'Q9s',
+            'JTs', 'J9s',
+            'T9s', 'T8s',
+            '98s', '97s',
+            '87s', '86s',
+            '76s', '75s',
+            '65s',
+            '54s',
+            'AQo', 'AJo',
+            'KQo'
+        ],
+        mixed: [
+            { hand: 'JJ', fourbet: 0.5, call: 0.5 },
+            { hand: 'TT', fourbet: 0.3, call: 0.7 },
+            { hand: 'A5s', fourbet: 0.6, call: 0.4 },
+            { hand: 'A4s', fourbet: 0.5, call: 0.5 }
+        ],
+        fold: 'rest'
+    },
+
+    // BTN öffnet, BB 3-bettet
+    BTN_vs_BB_3bet: {
+        fourbet: [
+            'AA', 'KK', 'QQ', 'AKs', 'AKo'
+        ],
+        call: [
+            'JJ', 'TT', '99', '88', '77', '66', '55',
+            'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+            'KQs', 'KJs', 'KTs', 'K9s', 'K8s',
+            'QJs', 'QTs', 'Q9s', 'Q8s',
+            'JTs', 'J9s', 'J8s',
+            'T9s', 'T8s',
+            '98s', '97s',
+            '87s', '86s',
+            '76s', '75s',
+            '65s', '64s',
+            '54s', '53s',
+            'AQo', 'AJo', 'ATo',
+            'KQo', 'KJo',
+            'QJo'
+        ],
+        mixed: [
+            { hand: 'JJ', fourbet: 0.45, call: 0.55 },
+            { hand: 'TT', fourbet: 0.3, call: 0.7 },
+            { hand: '99', fourbet: 0.15, call: 0.85 },
+            { hand: 'A5s', fourbet: 0.55, call: 0.45 },
+            { hand: 'A4s', fourbet: 0.45, call: 0.55 },
+            { hand: 'A3s', fourbet: 0.35, call: 0.65 }
+        ],
+        fold: 'rest'
+    }
+};
+
 // Export für app.js
 window.POSITIONS = POSITIONS;
 window.RFI_RANGES = RFI_RANGES;
 window.THREEBET_RANGES = THREEBET_RANGES;
+window.FACING_3BET_RANGES = FACING_3BET_RANGES;
