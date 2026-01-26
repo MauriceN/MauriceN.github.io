@@ -5,11 +5,12 @@ const SUITS = ['s', 'h', 'd', 'c']; // spades, hearts, diamonds, clubs
 const SUIT_SYMBOLS = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const SUIT_NAMES = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
 
-let currentMode = 'rfi'; // 'rfi', '3bet', oder 'facing3bet'
+let currentMode = 'rfi'; // 'rfi', '3bet', 'facing3bet', oder 'isolate'
 let currentHand = null;
 let currentPosition = null;
 let currentOpenerPosition = null;
 let current3BettorPosition = null; // Für facing3bet Modus
+let currentLimperPosition = null; // Für isolate Modus
 let correctActionData = null; // { action: 'raise'|'call'|'fold'|'mixed', isMixed: bool, mixedData?: {...} }
 let score = { correct: 0, total: 0 };
 let activePositions = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
@@ -29,9 +30,10 @@ let focusModeActive = false;
 
 // Detailed stats per mode/position/handType for leak detection
 let detailedStats = {
-    rfi: {},      // key: "position|handType" -> { total, correct, evLost }
-    '3bet': {},   // key: "position_vs_opener|handType" -> { total, correct, evLost }
-    facing3bet: {} // key: "position_vs_3bettor|handType" -> { total, correct, evLost }
+    rfi: {},       // key: "position|handType" -> { total, correct, evLost }
+    '3bet': {},    // key: "position_vs_opener|handType" -> { total, correct, evLost }
+    facing3bet: {},// key: "position_vs_3bettor|handType" -> { total, correct, evLost }
+    isolate: {}    // key: "position_vs_limper|handType" -> { total, correct, evLost }
 };
 
 // Hand-Typ Kategorien für Leak-Erkennung
@@ -98,6 +100,8 @@ function getSpotKey() {
         return `${currentPosition}_vs_${currentOpenerPosition}`;
     } else if (currentMode === 'facing3bet') {
         return `${currentPosition}_vs_${current3BettorPosition}`;
+    } else if (currentMode === 'isolate') {
+        return `${currentPosition}_vs_${currentLimperPosition}`;
     }
     return 'unknown';
 }
@@ -150,7 +154,9 @@ function loadFromLocalStorage() {
         evGainTotal = data.evGainTotal || 0;
         evLossTotal = data.evLossTotal || 0;
         mistakes = data.mistakes || [];
-        detailedStats = data.detailedStats || { rfi: {}, '3bet': {}, facing3bet: {} };
+        detailedStats = data.detailedStats || { rfi: {}, '3bet': {}, facing3bet: {}, isolate: {} };
+        // Sicherstellen, dass isolate existiert (für alte LocalStorage-Daten)
+        if (!detailedStats.isolate) detailedStats.isolate = {};
 
         return true;
     } catch (e) {
@@ -168,7 +174,7 @@ function resetAllStats() {
     evGainTotal = 0;
     evLossTotal = 0;
     mistakes = [];
-    detailedStats = { rfi: {}, '3bet': {}, facing3bet: {} };
+    detailedStats = { rfi: {}, '3bet': {}, facing3bet: {}, isolate: {} };
     focusModeActive = false;
 
     try {
@@ -197,7 +203,7 @@ function getWeaknesses(limit = 5) {
     const allWeaknesses = [];
 
     // Sammle Weaknesses aus allen Modi
-    for (const mode of ['rfi', '3bet', 'facing3bet']) {
+    for (const mode of ['rfi', '3bet', 'facing3bet', 'isolate']) {
         const modeStats = detailedStats[mode];
 
         for (const [key, stats] of Object.entries(modeStats)) {
@@ -243,7 +249,7 @@ function renderWeaknesses() {
         return;
     }
 
-    const modeNames = { rfi: 'RFI', '3bet': '3-Bet', facing3bet: 'vs 3-Bet' };
+    const modeNames = { rfi: 'RFI', '3bet': '3-Bet', facing3bet: 'vs 3-Bet', isolate: 'vs Limp' };
 
     weaknessesList.innerHTML = weaknesses.map(w => {
         const successPercent = Math.round(w.successRate * 100);
@@ -336,16 +342,25 @@ function generateFocusHand() {
         currentPosition = selectedWeakness.spot;
         currentOpenerPosition = null;
         current3BettorPosition = null;
+        currentLimperPosition = null;
     } else if (selectedWeakness.mode === '3bet') {
         const parts = selectedWeakness.spot.split(' vs ');
         currentPosition = parts[0];
         currentOpenerPosition = parts[1] || 'BTN';
         current3BettorPosition = null;
+        currentLimperPosition = null;
     } else if (selectedWeakness.mode === 'facing3bet') {
         const parts = selectedWeakness.spot.split(' vs ');
         currentPosition = parts[0];
         current3BettorPosition = parts[1] || 'BB';
         currentOpenerPosition = null;
+        currentLimperPosition = null;
+    } else if (selectedWeakness.mode === 'isolate') {
+        const parts = selectedWeakness.spot.split(' vs ');
+        currentPosition = parts[0];
+        currentLimperPosition = parts[1] || 'UTG';
+        currentOpenerPosition = null;
+        current3BettorPosition = null;
     }
 
     // Generiere Hand vom passenden Typ
@@ -406,13 +421,27 @@ function updateModeUI() {
         btn.classList.toggle('active', btn.dataset.mode === currentMode);
     });
 
-    // Show/hide Call button
-    elements.callBtn.style.display = (currentMode === '3bet' || currentMode === 'facing3bet') ? 'inline-block' : 'none';
+    // Show/hide Call button (used as Limp in isolate mode)
+    const callBtn = document.querySelector('.action-btn.call');
+    const limpBtn = document.querySelector('.action-btn.limp');
+
+    if (currentMode === '3bet' || currentMode === 'facing3bet') {
+        if (callBtn) callBtn.style.display = 'inline-block';
+        if (limpBtn) limpBtn.style.display = 'none';
+    } else if (currentMode === 'isolate') {
+        if (callBtn) callBtn.style.display = 'none';
+        if (limpBtn) limpBtn.style.display = 'inline-block';
+    } else {
+        if (callBtn) callBtn.style.display = 'none';
+        if (limpBtn) limpBtn.style.display = 'none';
+    }
 
     // Update Raise button text
     const raiseBtn = document.querySelector('.action-btn.raise');
     if (currentMode === 'facing3bet') {
         raiseBtn.innerHTML = '4-Bet<span class="shortcut">R</span>';
+    } else if (currentMode === 'isolate') {
+        raiseBtn.innerHTML = 'Iso-Raise<span class="shortcut">R</span>';
     } else {
         raiseBtn.innerHTML = 'Raise<span class="shortcut">R</span>';
     }
@@ -425,6 +454,8 @@ function renderScenarioText() {
         elements.scenarioText.innerHTML = `<strong>${currentOpenerPosition}</strong> hat geraised.<br>Was machst du?`;
     } else if (currentMode === 'facing3bet') {
         elements.scenarioText.innerHTML = `Du hast aus <strong>${currentPosition}</strong> geraised.<br><strong>${current3BettorPosition}</strong> 3-bettet. Was machst du?`;
+    } else if (currentMode === 'isolate') {
+        elements.scenarioText.innerHTML = `<strong>${currentLimperPosition}</strong> hat gelimpt.<br>Was machst du?`;
     }
 }
 
@@ -514,13 +545,25 @@ function setMode(mode) {
         btn.classList.toggle('active', btn.dataset.mode === mode);
     });
 
-    // Show/hide Call button based on mode
-    elements.callBtn.style.display = (mode === '3bet' || mode === 'facing3bet') ? 'inline-block' : 'none';
+    // Show/hide Call and Limp buttons based on mode
+    const limpBtn = document.querySelector('.action-btn.limp');
+    if (mode === '3bet' || mode === 'facing3bet') {
+        elements.callBtn.style.display = 'inline-block';
+        if (limpBtn) limpBtn.style.display = 'none';
+    } else if (mode === 'isolate') {
+        elements.callBtn.style.display = 'none';
+        if (limpBtn) limpBtn.style.display = 'inline-block';
+    } else {
+        elements.callBtn.style.display = 'none';
+        if (limpBtn) limpBtn.style.display = 'none';
+    }
 
-    // Update Raise button text for facing3bet mode
+    // Update Raise button text based on mode
     const raiseBtn = document.querySelector('.action-btn.raise');
     if (mode === 'facing3bet') {
         raiseBtn.innerHTML = '4-Bet<span class="shortcut">R</span>';
+    } else if (mode === 'isolate') {
+        raiseBtn.innerHTML = 'Iso-Raise<span class="shortcut">R</span>';
     } else {
         raiseBtn.innerHTML = 'Raise<span class="shortcut">R</span>';
     }
@@ -634,6 +677,7 @@ function renderRangeViewer() {
     let range = null;
     let rangeLabel = '';
     let isFourBetRange = false;
+    let isIsoRange = false;
 
     if (currentMode === 'rfi') {
         range = RFI_RANGES[currentPosition];
@@ -643,6 +687,11 @@ function renderRangeViewer() {
         range = FACING_3BET_RANGES[key];
         rangeLabel = `vs 3-Bet: ${currentPosition} vs ${current3BettorPosition}`;
         isFourBetRange = true;
+    } else if (currentMode === 'isolate' && currentLimperPosition) {
+        const key = `${currentPosition}_vs_${currentLimperPosition}_limp`;
+        range = ISO_RAISE_RANGES[key];
+        rangeLabel = `Iso-Raise: ${currentPosition} vs ${currentLimperPosition} Limp`;
+        isIsoRange = true;
     } else if (currentOpenerPosition) {
         const key = `${currentPosition}_vs_${currentOpenerPosition}`;
         range = THREEBET_RANGES[key];
@@ -657,7 +706,7 @@ function renderRangeViewer() {
         const cellHand = cell.dataset.hand;
 
         // Remove old classes
-        cell.classList.remove('raise', 'call', 'fold', 'mixed', 'current-hand',
+        cell.classList.remove('raise', 'call', 'fold', 'mixed', 'limp', 'current-hand',
             'equity-90', 'equity-80', 'equity-70', 'equity-60', 'equity-50',
             'equity-40', 'equity-30', 'equity-20', 'equity-10');
         cell.style.background = ''; // Reset inline style for mixed
@@ -683,7 +732,7 @@ function renderRangeViewer() {
                         isMixed = true;
                         cell.classList.add('mixed');
                         // Set gradient based on ratio (fourbet or raise depending on mode)
-                        const raisePercent = (mixedHand.fourbet || mixedHand.raise || 0) * 100;
+                        const raisePercent = (mixedHand.fourbet || mixedHand.raise || mixedHand.limp || 0) * 100;
                         cell.style.background = `linear-gradient(135deg,
                             rgba(76,175,80,0.8) 0%,
                             rgba(76,175,80,0.8) ${raisePercent}%,
@@ -699,6 +748,8 @@ function renderRangeViewer() {
                         cell.classList.add('raise');
                     } else if (range.call && range.call.includes(cellHand)) {
                         cell.classList.add('call');
+                    } else if (isIsoRange && range.limp && range.limp.includes(cellHand)) {
+                        cell.classList.add('limp');
                     } else {
                         cell.classList.add('fold');
                     }
@@ -763,6 +814,9 @@ function calculateEVGain(handNotation, correctAction) {
     } else if (correctAction === 'call') {
         // Richtig gecallt = moderater Gain
         evGain = Math.round(handValue * 0.7);
+    } else if (correctAction === 'limp') {
+        // Richtig gelimpt = moderater Gain (marginale Hände im Pot halten)
+        evGain = Math.round(handValue * 0.5);
     }
 
     evGainTotal += evGain;
@@ -792,6 +846,20 @@ function calculateEVLoss(handNotation, userAction, correctAction, position, open
     } else if (correctAction === 'fold' && userAction === 'call') {
         // Fold zu Call = Trash gecallt
         evLoss = Math.round((100 - handValue) * 0.7);
+    }
+    // Limp-spezifische Fehler (für Isolate-Modus)
+    else if (correctAction === 'limp' && userAction === 'fold') {
+        // Limp-behind gefoldet = moderater Verlust
+        evLoss = Math.round(handValue * 0.5);
+    } else if (correctAction === 'limp' && userAction === 'raise') {
+        // Limp-behind zu Raise = zu aggressiv mit marginaler Hand
+        evLoss = Math.round((100 - handValue) * 0.5);
+    } else if (correctAction === 'raise' && userAction === 'limp') {
+        // Iso-raise zu Limp = Value verschenkt
+        evLoss = Math.round(handValue * 0.5);
+    } else if (correctAction === 'fold' && userAction === 'limp') {
+        // Fold zu Limp = Trash gelimpt
+        evLoss = Math.round((100 - handValue) * 0.5);
     }
 
     evLoss = Math.max(5, evLoss); // Minimum 5 EV-Loss pro Fehler
@@ -855,7 +923,7 @@ function updateEVDisplay() {
     elements.evLoss.textContent = '-' + evLossTotal;
 
     // Fehler-Liste aktualisieren
-    const actionNames = { fold: 'Fold', call: 'Call', raise: 'Raise' };
+    const actionNames = { fold: 'Fold', call: 'Call', raise: 'Raise', limp: 'Limp' };
 
     if (mistakes.length === 0) {
         elements.mistakesList.innerHTML = '<li class="no-mistakes">Noch keine Fehler!</li>';
@@ -874,7 +942,7 @@ function updateEVDisplay() {
     }
 }
 
-function determineCorrectAction(handNotation, position, mode, openerPosition = null, threeBettorPosition = null) {
+function determineCorrectAction(handNotation, position, mode, openerPosition = null, threeBettorPosition = null, limperPosition = null) {
     let range = null;
 
     if (mode === 'rfi') {
@@ -943,6 +1011,33 @@ function determineCorrectAction(handNotation, position, mode, openerPosition = n
         }
         if (range.call && range.call.includes(handNotation)) {
             return { action: 'call', isMixed: false };
+        }
+        return { action: 'fold', isMixed: false };
+    } else if (mode === 'isolate') {
+        // Isolate Szenario - jemand limpt, wir entscheiden ob iso-raise, limp oder fold
+        const key = `${position}_vs_${limperPosition}_limp`;
+        range = ISO_RAISE_RANGES[key];
+
+        if (!range) return { action: 'fold', isMixed: false };
+
+        // Check for mixed strategy first
+        if (range.mixed) {
+            const mixedHand = range.mixed.find(m => m.hand === handNotation);
+            if (mixedHand) {
+                return {
+                    action: 'mixed',
+                    isMixed: true,
+                    mixedData: mixedHand,
+                    isIsoRaise: true
+                };
+            }
+        }
+
+        if (range.raise && range.raise.includes(handNotation)) {
+            return { action: 'raise', isMixed: false, isIsoRaise: true }; // raise = iso-raise
+        }
+        if (range.limp && range.limp.includes(handNotation)) {
+            return { action: 'limp', isMixed: false };
         }
         return { action: 'fold', isMixed: false };
     }
@@ -1036,6 +1131,32 @@ function nextHand() {
         correctActionData = determineCorrectAction(handNotation, currentPosition, 'facing3bet', null, current3BettorPosition);
 
         elements.scenarioText.innerHTML = `Du hast aus <strong>${currentPosition}</strong> geraised.<br><strong>${current3BettorPosition}</strong> 3-bettet. Was machst du?`;
+    } else if (currentMode === 'isolate') {
+        // Isolate: Jemand limpt, wir entscheiden ob iso-raise, limp behind oder fold
+        // Verfügbare Spots basierend auf ISO_RAISE_RANGES
+        const isoSpots = [
+            { hero: 'BTN', limper: 'UTG' },
+            { hero: 'BTN', limper: 'HJ' },
+            { hero: 'BTN', limper: 'CO' },
+            { hero: 'CO', limper: 'UTG' },
+            { hero: 'CO', limper: 'HJ' },
+            { hero: 'HJ', limper: 'UTG' },
+            { hero: 'SB', limper: 'UTG' },
+            { hero: 'SB', limper: 'HJ' },
+            { hero: 'SB', limper: 'CO' },
+            { hero: 'SB', limper: 'BTN' },
+            { hero: 'BB', limper: 'SB' }
+        ];
+
+        const spot = isoSpots[Math.floor(Math.random() * isoSpots.length)];
+        currentPosition = spot.hero;
+        currentLimperPosition = spot.limper;
+        currentOpenerPosition = null;
+        current3BettorPosition = null;
+
+        correctActionData = determineCorrectAction(handNotation, currentPosition, 'isolate', null, null, currentLimperPosition);
+
+        elements.scenarioText.innerHTML = `<strong>${currentLimperPosition}</strong> hat gelimpt.<br>Was machst du?`;
     }
 
     // Update UI
@@ -1074,7 +1195,7 @@ function handleAction(action) {
             isCorrect = true; // Beide Aktionen sind "korrekt"
         }
     } else {
-        // Normale Aktion
+        // Normale Aktion - 'limp' ist auch ein valider Vergleich
         isCorrect = action === correctActionData.action;
     }
 
@@ -1120,10 +1241,17 @@ function showFeedback(isCorrect, userAction, isMixedAcceptable = false, mixedFre
 
     const handNotation = handToNotation(currentHand);
     const isFourBetMode = currentMode === 'facing3bet';
+    const isIsoMode = currentMode === 'isolate';
+
+    let raiseLabel = 'Raise';
+    if (isFourBetMode) raiseLabel = '4-Bet';
+    else if (isIsoMode) raiseLabel = 'Iso-Raise';
+
     const actionNames = {
         fold: 'Fold',
         call: 'Call',
-        raise: isFourBetMode ? '4-Bet' : 'Raise',
+        limp: 'Limp',
+        raise: raiseLabel,
         mixed: 'Mixed'
     };
 
@@ -1162,6 +1290,8 @@ function showFeedback(isCorrect, userAction, isMixedAcceptable = false, mixedFre
             scenarioInfo = ` (vs ${currentOpenerPosition} Open)`;
         } else if (currentMode === 'facing3bet') {
             scenarioInfo = ` (${currentPosition} vs ${current3BettorPosition} 3-Bet)`;
+        } else if (currentMode === 'isolate') {
+            scenarioInfo = ` (vs ${currentLimperPosition} Limp)`;
         }
 
         elements.correctAnswer.innerHTML = `
@@ -1213,7 +1343,10 @@ function handleKeyboard(e) {
             break;
         case 'c':
         case '2':
-            if (currentMode === '3bet') handleAction('call');
+            if (currentMode === '3bet' || currentMode === 'facing3bet') handleAction('call');
+            break;
+        case 'l':
+            if (currentMode === 'isolate') handleAction('limp');
             break;
         case 'r':
         case '3':

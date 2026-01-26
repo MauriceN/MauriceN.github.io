@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Analyzer - Poker Trainer</title>
+    <link rel="stylesheet" href="analyzer-styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Hand Analyzer</h1>
+            <p class="subtitle">Analysiere deine Spots</p>
+        </header>
+
+        <!-- Mode Selection -->
+        <section class="mode-section">
+            <div class="mode-buttons">
+                <button class="mode-btn active" data-mode="cbet">C-Bet (als PFR)</button>
+                <button class="mode-btn" data-mode="facing-cbet">Facing C-Bet (als Caller)</button>
+            </div>
+        </section>
+
+        <!-- Spot Selection -->
+        <section class="spot-section">
+            <h2>Spot</h2>
+            <div class="spot-buttons" id="spot-buttons">
+                <!-- Wird dynamisch befüllt -->
+            </div>
+        </section>
+
+        <!-- Card Selection -->
+        <section class="cards-section">
+            <div class="selection-row">
+                <!-- Hero Hand -->
+                <div class="card-selection">
+                    <h2>Deine Hand</h2>
+                    <div class="selected-cards" id="hero-cards">
+                        <div class="card-slot empty" data-slot="hero-0">?</div>
+                        <div class="card-slot empty" data-slot="hero-1">?</div>
+                    </div>
+                    <button class="clear-btn" data-target="hero">Leeren</button>
+                </div>
+
+                <!-- Board -->
+                <div class="card-selection">
+                    <h2>Board (Flop)</h2>
+                    <div class="selected-cards" id="board-cards">
+                        <div class="card-slot empty" data-slot="board-0">?</div>
+                        <div class="card-slot empty" data-slot="board-1">?</div>
+                        <div class="card-slot empty" data-slot="board-2">?</div>
+                    </div>
+                    <button class="clear-btn" data-target="board">Leeren</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Card Picker -->
+        <section class="picker-section">
+            <h2>Karte auswählen</h2>
+            <div class="card-picker" id="card-picker">
+                <!-- 4 Reihen für jede Farbe -->
+                <div class="suit-row" data-suit="s">
+                    <span class="suit-label spades">♠</span>
+                    <div class="rank-cards"></div>
+                </div>
+                <div class="suit-row" data-suit="h">
+                    <span class="suit-label hearts">♥</span>
+                    <div class="rank-cards"></div>
+                </div>
+                <div class="suit-row" data-suit="d">
+                    <span class="suit-label diamonds">♦</span>
+                    <div class="rank-cards"></div>
+                </div>
+                <div class="suit-row" data-suit="c">
+                    <span class="suit-label clubs">♣</span>
+                    <div class="rank-cards"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analyze Button -->
+        <section class="analyze-section">
+            <button class="analyze-btn" id="analyze-btn" disabled>Analysieren</button>
+        </section>
+
+        <!-- Results -->
+        <section class="results-section" id="results" style="display: none;">
+            <h2>Analyse</h2>
+
+            <div class="result-grid">
+                <div class="result-item">
+                    <span class="result-label">Hand-Kategorie</span>
+                    <span class="result-value" id="result-category">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Board-Texture</span>
+                    <span class="result-value" id="result-texture">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Spot</span>
+                    <span class="result-value" id="result-spot">-</span>
+                </div>
+            </div>
+
+            <div class="action-result">
+                <h3>Korrekte Aktion</h3>
+                <div class="correct-action" id="correct-action">-</div>
+            </div>
+
+            <div class="explanation-box" id="explanation-box">
+                <h3>Erklärung</h3>
+                <div class="explanation-text" id="explanation-text"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts -->
+    <script src="postflop-ranges.js"></script>
+    <script src="analyzer.js"></script>
+</body>
+</html>

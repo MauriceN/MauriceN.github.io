@@ -1,0 +1,431 @@
+/* Hand Analyzer Styles */
+/* Angepasst an Poker Trainer Design */
+/* ================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+    min-height: 100vh;
+    color: #fff;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    color: #a0d0a0;
+    font-size: 0.95rem;
+}
+
+/* Sections */
+section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+section h2 {
+    font-size: 1rem;
+    color: #c0e0c0;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Mode Buttons */
+.mode-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #4a7c4a;
+    background: transparent;
+    color: #a0d0a0;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.mode-btn:hover {
+    background: rgba(74, 124, 74, 0.3);
+    color: #fff;
+}
+
+.mode-btn.active {
+    background: #4a7c4a;
+    color: #fff;
+}
+
+/* Spot Buttons */
+.spot-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.spot-btn {
+    padding: 10px 16px;
+    border: 2px solid #4a7c4a;
+    background: transparent;
+    color: #a0d0a0;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.spot-btn:hover {
+    background: rgba(74, 124, 74, 0.3);
+    color: #fff;
+}
+
+.spot-btn.active {
+    background: #4a7c4a;
+    color: #fff;
+}
+
+/* Card Selection */
+.selection-row {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+}
+
+.card-selection {
+    text-align: center;
+}
+
+.card-selection h2 {
+    margin-bottom: 10px;
+}
+
+.selected-cards {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.card-slot {
+    width: 55px;
+    height: 77px;
+    border: 2px dashed #4a7c4a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #4a7c4a;
+    background: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.card-slot:hover {
+    border-color: #6a9c6a;
+}
+
+.card-slot.filled {
+    border-style: solid;
+    border-color: #d4af37;
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+}
+
+.card-slot.filled.hearts,
+.card-slot.filled.diamonds {
+    color: #d32f2f;
+}
+
+.card-slot.filled.spades,
+.card-slot.filled.clubs {
+    color: #1a1a1a;
+}
+
+.clear-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid #666;
+    color: #a0d0a0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.clear-btn:hover {
+    border-color: #f44336;
+    color: #f44336;
+}
+
+/* Card Picker */
+.picker-section {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.card-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.suit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.suit-label {
+    width: 30px;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.suit-label.hearts,
+.suit-label.diamonds {
+    color: #d32f2f;
+}
+
+.suit-label.spades,
+.suit-label.clubs {
+    color: #fff;
+}
+
+.rank-cards {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.picker-card {
+    width: 38px;
+    height: 50px;
+    background: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 2px solid transparent;
+}
+
+.picker-card:hover:not(.disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(74, 124, 74, 0.4);
+    border-color: #4a7c4a;
+}
+
+.picker-card.hearts,
+.picker-card.diamonds {
+    color: #d32f2f;
+}
+
+.picker-card.spades,
+.picker-card.clubs {
+    color: #1a1a1a;
+}
+
+.picker-card.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.picker-card.selected {
+    border-color: #d4af37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+}
+
+/* Analyze Button */
+.analyze-section {
+    background: transparent;
+    padding: 0;
+    text-align: center;
+}
+
+.analyze-btn {
+    padding: 16px 60px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: #4a7c4a;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.analyze-btn:hover:not(:disabled) {
+    background: #5a9c5a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 124, 74, 0.4);
+}
+
+.analyze-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Results */
+.results-section {
+    background: rgba(74, 124, 74, 0.1);
+    border: 2px solid rgba(74, 124, 74, 0.3);
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.result-item {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.result-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #a0d0a0;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.result-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Action Result */
+.action-result {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.action-result h3 {
+    font-size: 0.9rem;
+    color: #a0d0a0;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.correct-action {
+    font-size: 1.8rem;
+    font-weight: bold;
+    padding: 20px;
+    border-radius: 10px;
+    background: #4CAF50;
+    display: inline-block;
+    min-width: 200px;
+}
+
+.correct-action.mixed {
+    background: #ff9800;
+    font-size: 1.2rem;
+}
+
+/* Explanation Box */
+.explanation-box {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 3px solid #ff9800;
+}
+
+.explanation-box h3 {
+    font-size: 0.9rem;
+    color: #a0d0a0;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.explanation-text {
+    color: #e0e0e0;
+    line-height: 1.6;
+}
+
+.explanation-text strong {
+    color: #ff9800;
+}
+
+/* Texture Badge */
+.texture-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.texture-badge.dry { background: #8d6e63; color: #fff; }
+.texture-badge.wet { background: #42a5f5; color: #fff; }
+.texture-badge.paired { background: #ab47bc; color: #fff; }
+.texture-badge.monotone { background: #ef5350; color: #fff; }
+.texture-badge.connected { background: #66bb6a; color: #fff; }
+
+/* Responsive */
+@media (max-width: 600px) {
+    .selection-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .result-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mode-buttons {
+        flex-direction: column;
+    }
+
+    .picker-card {
+        width: 32px;
+        height: 44px;
+        font-size: 0.85rem;
+    }
+
+    .suit-label {
+        width: 24px;
+        font-size: 1.2rem;
+    }
+
+    .card-slot {
+        width: 50px;
+        height: 70px;
+    }
+}

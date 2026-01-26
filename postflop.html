@@ -248,24 +248,24 @@
         <aside class="ev-sidebar">
             <!-- EV Metrics -->
             <div class="ev-metrics">
-                <div class="ev-metric-row">
-                    <div class="ev-metric main-metric">
-                        <span class="ev-metric-label">Net EV</span>
-                        <span class="ev-metric-value ev-positive" id="net-ev">+0</span>
+                <div class="ev-metric-row main-metric">
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">Net EV /100h</span>
+                        <span class="ev-metric-value ev-positive" id="ev-per-100">+0</span>
                     </div>
                     <div class="ev-metric">
-                        <span class="ev-metric-label">EV/100 Hands</span>
-                        <span class="ev-rating rating-good" id="ev-rating">-</span>
+                        <span class="ev-metric-label">Bewertung</span>
+                        <span class="ev-rating" id="ev-rating">-</span>
                     </div>
                 </div>
                 <div class="ev-metric-row">
                     <div class="ev-metric">
-                        <span class="ev-metric-label">EV Gains</span>
-                        <span class="ev-gain-value" id="ev-gains">+0</span>
+                        <span class="ev-metric-label">Gains</span>
+                        <span class="ev-metric-value ev-gain-value" id="ev-gain">+0</span>
                     </div>
                     <div class="ev-metric">
-                        <span class="ev-metric-label">EV Losses</span>
-                        <span class="ev-loss-value" id="ev-losses">-0</span>
+                        <span class="ev-metric-label">Losses</span>
+                        <span class="ev-metric-value ev-loss-value" id="ev-loss">-0</span>
                     </div>
                 </div>
             </div>
@@ -287,6 +287,34 @@
                 <button class="focus-mode-btn" id="focus-mode-btn" onclick="toggleFocusMode()">
                     Schwächen trainieren
                 </button>
+            </div>
+
+            <!-- Stats Reset -->
+            <div class="stats-reset">
+                <button class="reset-btn" onclick="resetAllStats()">Stats zurücksetzen</button>
+            </div>
+
+            <!-- EV-Loss Legende pro Hand -->
+            <div class="ev-legend">
+                <h4>EV-Loss pro Fehler</h4>
+                <table>
+                    <tr><td class="rating-excellent">0-15</td><td>Kleiner Fehler</td></tr>
+                    <tr><td class="rating-good">15-35</td><td>Mittlerer Fehler</td></tr>
+                    <tr><td class="rating-medium">35-60</td><td>Großer Fehler</td></tr>
+                    <tr><td class="rating-bad">60+</td><td>Kritischer Fehler</td></tr>
+                </table>
+            </div>
+
+            <!-- Bewertungs-Legende -->
+            <div class="ev-legend">
+                <h4>Bewertung (Net EV/100h)</h4>
+                <table>
+                    <tr><td class="rating-excellent">6000+</td><td>Perfekt</td></tr>
+                    <tr><td class="rating-excellent">4000+</td><td>Sehr gut</td></tr>
+                    <tr><td class="rating-good">2000+</td><td>Solide</td></tr>
+                    <tr><td class="rating-medium">0+</td><td>Ausbaufähig</td></tr>
+                    <tr><td class="rating-bad">&lt;0</td><td>Negativ</td></tr>
+                </table>
             </div>
         </aside>
     </div>

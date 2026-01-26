@@ -33,6 +33,14 @@ const HAND_CATEGORY_NAMES = {
     'top_pair_weak': 'Top Pair (schwacher Kicker)',
     'second_pair': 'Second Pair',
     'low_pair': 'Low Pair',
+    // Combo Draws - Pair + Draw kombinationen
+    'pair_flush_draw': 'Pair + Flush Draw',
+    'pair_oesd': 'Pair + OESD',
+    'pair_gutshot': 'Pair + Gutshot',
+    // Monster Draws
+    'flush_draw_oesd': 'Flush Draw + OESD',
+    'flush_draw_gutshot': 'Flush Draw + Gutshot',
+    // Standard Draws
     'flush_draw': 'Flush Draw',
     'oesd': 'Open-Ended Straight Draw',
     'gutshot': 'Gutshot',
@@ -336,9 +344,10 @@ let currentStreet = 'flop';        // 'flop' oder 'turn'
 let currentTurnCard = null;        // {rank, suit}
 let turnHandCategory = '';         // Hand-Kategorie mit Turn
 let turnBrought = '';              // 'blank', 'flush_completing', 'straight_completing', 'pairing', 'connected'
-let flopDecision = null;           // 'cbet' oder 'check'
+let flopDecision = null;           // 'cbet', 'check', 'call', 'raise', 'fold'
 let turnCorrectActionData = null;  // Korrekte Turn-Aktion
 let turnTransitionTimer = null;    // Timer für Turn-Übergang
+let villainTurnAction = null;      // 'barrel' oder 'check' - was Villain am Turn macht (nur für facing-cbet)
 
 // ============================================
 // LOCAL STORAGE
@@ -507,10 +516,10 @@ const elements = {
     correctCount: document.getElementById('correct-count'),
     totalCount: document.getElementById('total-count'),
     percentage: document.getElementById('percentage'),
-    netEv: document.getElementById('net-ev'),
+    evPer100: document.getElementById('ev-per-100'),
     evRating: document.getElementById('ev-rating'),
-    evGains: document.getElementById('ev-gains'),
-    evLosses: document.getElementById('ev-losses'),
+    evGain: document.getElementById('ev-gain'),
+    evLoss: document.getElementById('ev-loss'),
     mistakesList: document.getElementById('mistakes-list'),
     weaknessesList: document.getElementById('weaknesses-list')
 };
@@ -828,38 +837,60 @@ function evaluateHandCategory(heroHand, board) {
         return 'trips';
     }
 
-    // Check für Pair
+    // Hilfs-Checks für Draws (für Combo-Detection)
+    const hasFlushDraw = maxSuitCount === 4;
+    const uniqueValues = [...new Set(allValues)].sort((a, b) => a - b);
+    const straightDrawType = checkStraightDraw(uniqueValues); // 'oesd', 'gutshot', oder null
+
+    // Check für Pair (mit Combo-Draw Detection)
     if (heroHitsBoard.length === 1) {
         const hitRank = heroHitsBoard[0];
         const hitValue = RANK_VALUES[hitRank];
         const kickerValue = heroValues.find(v => v !== hitValue) || heroValues[0];
 
+        // Bestimme Pair-Typ
+        let pairType;
         if (hitValue === highestBoardValue) {
-            // Top Pair
-            if (kickerValue >= 10) { // T+
-                return 'top_pair_good';
-            } else {
-                return 'top_pair_weak';
-            }
+            pairType = kickerValue >= 10 ? 'top_pair_good' : 'top_pair_weak';
         } else if (hitValue === secondBoardValue) {
-            return 'second_pair';
+            pairType = 'second_pair';
         } else {
-            return 'low_pair';
+            pairType = 'low_pair';
         }
+
+        // Combo-Draw Check: Pair + Flush Draw oder Pair + Straight Draw
+        // Nur für schwächere Pairs (nicht Top Pair good) sind Combo-Draws relevant
+        if (pairType !== 'top_pair_good') {
+            if (hasFlushDraw) {
+                return 'pair_flush_draw'; // ~12+ Outs - sehr stark!
+            }
+            if (straightDrawType === 'oesd') {
+                return 'pair_oesd'; // ~11+ Outs
+            }
+            if (straightDrawType === 'gutshot') {
+                return 'pair_gutshot'; // ~7+ Outs
+            }
+        }
+
+        return pairType;
     }
 
-    // Check für Flush Draw (genau 4 gleiche Farbe)
-    if (maxSuitCount === 4) {
+    // Check für Flush Draw + Straight Draw Combo (Monster Draw)
+    if (hasFlushDraw) {
+        if (straightDrawType === 'oesd') {
+            return 'flush_draw_oesd'; // ~15 Outs - Monster!
+        }
+        if (straightDrawType === 'gutshot') {
+            return 'flush_draw_gutshot'; // ~12 Outs
+        }
         return 'flush_draw';
     }
 
-    // Straight Draw Check
-    const uniqueValues = [...new Set(allValues)].sort((a, b) => a - b);
-    const straightDraw = checkStraightDraw(uniqueValues);
-    if (straightDraw === 'oesd') {
+    // Straight Draw Check (ohne Flush)
+    if (straightDrawType === 'oesd') {
         return 'oesd';
     }
-    if (straightDraw === 'gutshot') {
+    if (straightDrawType === 'gutshot') {
         return 'gutshot';
     }
 
@@ -1058,6 +1089,7 @@ function nextScenario() {
     turnBrought = '';
     flopDecision = null;
     turnCorrectActionData = null;
+    villainTurnAction = null;
 
     // Reset UI
     elements.feedback.classList.remove('show', 'correct', 'wrong');
@@ -1294,8 +1326,8 @@ function handleFlopAction(action) {
         evGainTotal += evGain;
         trackDetailedStat(true, 0);
 
-        // Bei C-Bet Mode und korrektem C-Bet: Weiter zum Turn
-        if (currentMode === 'cbet' && action === 'cbet') {
+        // Bei C-Bet Mode und korrektem C-Bet oder Check: Weiter zum Turn
+        if (currentMode === 'cbet' && (action === 'cbet' || action === 'check')) {
             showFeedback(true, isMixedAcceptable, mixedFrequency, evGain, action);
             updateScoreDisplay();
             saveToLocalStorage();
@@ -1304,6 +1336,20 @@ function handleFlopAction(action) {
             turnTransitionTimer = setTimeout(() => {
                 turnTransitionTimer = null;
                 progressToTurn();
+            }, 1500);
+            return;
+        }
+
+        // Bei Facing C-Bet Mode und korrektem Call: Weiter zum Turn
+        if (currentMode === 'facing-cbet' && action === 'call') {
+            showFeedback(true, isMixedAcceptable, mixedFrequency, evGain, action);
+            updateScoreDisplay();
+            saveToLocalStorage();
+
+            // Nach kurzer Pause zum Turn
+            turnTransitionTimer = setTimeout(() => {
+                turnTransitionTimer = null;
+                progressToTurnFacing();
             }, 1500);
             return;
         }
@@ -1324,11 +1370,18 @@ function handleFlopAction(action) {
 }
 
 function handleTurnAction(action) {
+    // Bei Facing C-Bet Mode: eigene Turn-Logik
+    if (currentMode === 'facing-cbet') {
+        handleFacingTurnAction(action);
+        return;
+    }
+
     setActionButtonsEnabled(false);
     score.total++;
 
-    // Mappe 'cbet' auf 'barrel' für Turn
-    const turnAction = action === 'cbet' ? 'barrel' : action;
+    // Mappe 'cbet' auf 'barrel' oder 'bet' für Turn
+    const isDelayedCbet = flopDecision === 'check';
+    const turnAction = action === 'cbet' ? (isDelayedCbet ? 'bet' : 'barrel') : action;
 
     let isCorrect = false;
     let isMixedAcceptable = false;
@@ -1400,8 +1453,10 @@ function progressToTurn() {
 }
 
 function determineTurnCorrectAction() {
-    // Hole Turn Barrel Ranges
-    const turnRanges = window.TURN_BARREL_RANGES;
+    // Wähle Ranges basierend auf Flop-Entscheidung
+    const isDelayedCbet = flopDecision === 'check';
+    const turnRanges = isDelayedCbet ? window.DELAYED_CBET_RANGES : window.TURN_BARREL_RANGES;
+
     if (!turnRanges) {
         return { action: 'check', isMixed: false };
     }
@@ -1425,22 +1480,41 @@ function determineTurnCorrectAction() {
         return { action: 'check', isMixed: false };
     }
 
-    // Prüfe Mixed Strategies
+    // Prüfe Mixed Strategies (unterschiedliche Keys für Barrel vs Delayed Bet)
     if (turnTypeRanges.mixed) {
         const mixedEntry = turnTypeRanges.mixed.find(m => m.category === turnHandCategory);
         if (mixedEntry) {
-            return {
-                action: 'mixed',
-                isMixed: true,
-                mixedData: { barrel: mixedEntry.barrel, check: mixedEntry.check }
-            };
+            if (isDelayedCbet) {
+                // Delayed C-Bet: bet/check
+                return {
+                    action: 'mixed',
+                    isMixed: true,
+                    mixedData: { bet: mixedEntry.bet, check: mixedEntry.check }
+                };
+            } else {
+                // Barrel: barrel/check
+                return {
+                    action: 'mixed',
+                    isMixed: true,
+                    mixedData: { barrel: mixedEntry.barrel, check: mixedEntry.check }
+                };
+            }
         }
     }
 
     // Prüfe definitive Aktionen
-    if (turnTypeRanges.barrel && turnTypeRanges.barrel.includes(turnHandCategory)) {
-        return { action: 'barrel', isMixed: false };
+    if (isDelayedCbet) {
+        // Delayed C-Bet: bet/check
+        if (turnTypeRanges.bet && turnTypeRanges.bet.includes(turnHandCategory)) {
+            return { action: 'bet', isMixed: false };
+        }
+    } else {
+        // Barrel: barrel/check
+        if (turnTypeRanges.barrel && turnTypeRanges.barrel.includes(turnHandCategory)) {
+            return { action: 'barrel', isMixed: false };
+        }
     }
+
     if (turnTypeRanges.check && turnTypeRanges.check.includes(turnHandCategory)) {
         return { action: 'check', isMixed: false };
     }
@@ -1449,13 +1523,385 @@ function determineTurnCorrectAction() {
     return { action: 'check', isMixed: false };
 }
 
-function calculateTurnEVLoss(userAction) {
+// ============================================
+// FACING C-BET TURN FUNCTIONS
+// ============================================
+
+function progressToTurnFacing() {
+    // Reset Feedback
+    elements.feedback.classList.remove('show', 'correct', 'wrong');
+
+    // Wechsel zum Turn
+    currentStreet = 'turn';
+
+    // Turn-Karte ziehen
+    dealTurnCard();
+
+    // Turn-Texture bestimmen
+    turnBrought = identifyTurnBrought(currentBoard);
+
+    // Hand neu evaluieren mit 4 Karten
+    turnHandCategory = evaluateHandCategory(currentHeroHand, currentBoard);
+
+    // Bestimme ob Villain barrelt oder checkt
+    villainTurnAction = determineVillainTurnAction();
+
+    // Korrekte Turn-Aktion basierend auf Villain's Aktion bestimmen
+    turnCorrectActionData = determineFacingTurnCorrectAction();
+
+    // UI aktualisieren
+    renderTurnCard();
+    renderFacingTurnScenario();
+    updateFacingTurnActionButtons();
+    setActionButtonsEnabled(true);
+
+    // Street-Indikator aktualisieren
+    const indicator = document.getElementById('street-indicator');
+    if (indicator) {
+        indicator.querySelector('.street.flop').classList.remove('active');
+        indicator.querySelector('.street.flop').classList.add('completed');
+        indicator.querySelector('.street.turn').classList.add('active');
+    }
+}
+
+function determineVillainTurnAction() {
+    // Villain's Turn-Aktion basierend auf Turn-Texture
+    // Realistische Frequenzen für verschiedene Runouts
+    const barrelFrequencies = {
+        'blank': 0.65,              // Blank: 65% barrel
+        'flush_completing': 0.35,   // Flush completing: 35% barrel (scary)
+        'straight_completing': 0.40, // Straight completing: 40% barrel
+        'pairing': 0.50,            // Pairing: 50% barrel
+        'connected': 0.45           // Connected: 45% barrel
+    };
+
+    const barrelFreq = barrelFrequencies[turnBrought] || 0.55;
+    return Math.random() < barrelFreq ? 'barrel' : 'check';
+}
+
+function determineFacingTurnCorrectAction() {
+    // Wähle Ranges basierend auf Villain's Turn-Aktion
+    const ranges = villainTurnAction === 'barrel'
+        ? window.FACING_TURN_BARREL_RANGES
+        : window.PROBE_BET_RANGES;
+
+    if (!ranges) {
+        return { action: villainTurnAction === 'barrel' ? 'fold' : 'check', isMixed: false };
+    }
+
+    // Spot mit Fallback auf BB_vs_BTN
+    let spotRanges = ranges[currentSpot];
+    if (!spotRanges) {
+        spotRanges = ranges['BB_vs_BTN'];
+    }
+    if (!spotRanges) {
+        return { action: villainTurnAction === 'barrel' ? 'fold' : 'check', isMixed: false };
+    }
+
+    const textureRanges = spotRanges[currentTexture];
+    if (!textureRanges) {
+        return { action: villainTurnAction === 'barrel' ? 'fold' : 'check', isMixed: false };
+    }
+
+    const turnTypeRanges = textureRanges[turnBrought] || textureRanges['blank'];
+    if (!turnTypeRanges) {
+        return { action: villainTurnAction === 'barrel' ? 'fold' : 'check', isMixed: false };
+    }
+
+    // Prüfe Mixed Strategies
+    if (turnTypeRanges.mixed) {
+        const mixedEntry = turnTypeRanges.mixed.find(m => m.category === turnHandCategory);
+        if (mixedEntry) {
+            if (villainTurnAction === 'barrel') {
+                // Facing barrel: raise/call/fold
+                return {
+                    action: 'mixed',
+                    isMixed: true,
+                    mixedData: {
+                        raise: mixedEntry.raise || 0,
+                        call: mixedEntry.call || 0,
+                        fold: mixedEntry.fold || 0
+                    }
+                };
+            } else {
+                // Villain checked: bet/check
+                return {
+                    action: 'mixed',
+                    isMixed: true,
+                    mixedData: { bet: mixedEntry.bet, check: mixedEntry.check }
+                };
+            }
+        }
+    }
+
+    // Prüfe definitive Aktionen
+    if (villainTurnAction === 'barrel') {
+        // Facing barrel: raise/call/fold
+        if (turnTypeRanges.raise && turnTypeRanges.raise.includes(turnHandCategory)) {
+            return { action: 'raise', isMixed: false };
+        }
+        if (turnTypeRanges.call && turnTypeRanges.call.includes(turnHandCategory)) {
+            return { action: 'call', isMixed: false };
+        }
+        if (turnTypeRanges.fold && turnTypeRanges.fold.includes(turnHandCategory)) {
+            return { action: 'fold', isMixed: false };
+        }
+    } else {
+        // Villain checked: bet/check (Probe Bet)
+        if (turnTypeRanges.bet && turnTypeRanges.bet.includes(turnHandCategory)) {
+            return { action: 'bet', isMixed: false };
+        }
+        if (turnTypeRanges.check && turnTypeRanges.check.includes(turnHandCategory)) {
+            return { action: 'check', isMixed: false };
+        }
+    }
+
+    // Fallback
+    return { action: villainTurnAction === 'barrel' ? 'fold' : 'check', isMixed: false };
+}
+
+function handleFacingTurnAction(action) {
+    setActionButtonsEnabled(false);
+    score.total++;
+
+    // Mappe Aktionen für Probe Bet Szenario
+    let turnAction = action;
+    if (villainTurnAction === 'check' && action === 'cbet') {
+        turnAction = 'bet'; // cbet-Button wird für Probe Bet verwendet
+    }
+
+    let isCorrect = false;
+    let isMixedAcceptable = false;
+    let mixedFrequency = 0;
+
+    if (turnCorrectActionData.isMixed) {
+        const mixedData = turnCorrectActionData.mixedData;
+        if (mixedData[turnAction] && mixedData[turnAction] > 0) {
+            isMixedAcceptable = true;
+            mixedFrequency = mixedData[turnAction];
+            isCorrect = true;
+        }
+    } else {
+        isCorrect = turnAction === turnCorrectActionData.action;
+    }
+
+    if (isCorrect) {
+        score.correct++;
+        const evGain = calculateFacingTurnEVGain(isMixedAcceptable, mixedFrequency);
+        evGainTotal += evGain;
+        trackDetailedStat(true, 0);
+        showFacingTurnFeedback(true, isMixedAcceptable, mixedFrequency, evGain, action);
+    } else {
+        const evLoss = calculateFacingTurnEVLoss(turnAction);
+        evLossTotal += evLoss;
+        trackDetailedStat(false, evLoss);
+        addMistake(turnAction, evLoss);
+        showFacingTurnFeedback(false, false, 0, evLoss, action);
+    }
+
+    updateScoreDisplay();
+    saveToLocalStorage();
+    renderWeaknesses();
+    elements.nextBtn.classList.add('show');
+}
+
+function calculateFacingTurnEVGain(isMixed, mixedFrequency) {
     const baseValue = HAND_CATEGORY_VALUES[turnHandCategory] || 50;
 
-    if (turnCorrectActionData.action === 'barrel' && userAction === 'check') {
+    if (isMixed) {
+        return Math.round(baseValue * mixedFrequency);
+    }
+    return baseValue;
+}
+
+function calculateFacingTurnEVLoss(userAction) {
+    const baseValue = HAND_CATEGORY_VALUES[turnHandCategory] || 50;
+    const correctAction = turnCorrectActionData.action;
+
+    if (villainTurnAction === 'barrel') {
+        // Facing Double Barrel
+        if (correctAction === 'raise' && userAction === 'fold') {
+            return Math.round(baseValue * 1.0); // Starke Hand gefoldet
+        }
+        if (correctAction === 'call' && userAction === 'fold') {
+            return Math.round(baseValue * 0.6); // Callbare Hand gefoldet
+        }
+        if (correctAction === 'fold' && userAction === 'call') {
+            return Math.round(baseValue * 0.6); // Gecallt statt gefoldet
+        }
+        if (correctAction === 'fold' && userAction === 'raise') {
+            return Math.round(baseValue * 1.0); // Geraised statt gefoldet
+        }
+    } else {
+        // Villain checked - Probe Bet Situation
+        if (correctAction === 'bet' && userAction === 'check') {
+            return Math.round(baseValue * 0.5); // Value/Bluff verpasst
+        }
+        if (correctAction === 'check' && userAction === 'bet') {
+            return Math.round(baseValue * 0.6); // Unnötiger Bluff/Overbet
+        }
+    }
+
+    return Math.round(baseValue * 0.5);
+}
+
+function renderFacingTurnScenario() {
+    const [heroPos, , villainPos] = currentSpot.split('_');
+
+    if (villainTurnAction === 'barrel') {
+        elements.scenarioText.innerHTML = `
+            <strong>Turn:</strong> ${villainPos} bettet erneut (Double Barrel).<br>
+            <small>Fold, Call oder Raise?</small>
+        `;
+    } else {
+        elements.scenarioText.innerHTML = `
+            <strong>Turn:</strong> ${villainPos} checkt.<br>
+            <small>Probe Bet oder Check?</small>
+        `;
+    }
+}
+
+function updateFacingTurnActionButtons() {
+    if (villainTurnAction === 'barrel') {
+        // Facing Double Barrel: Fold/Call/Raise
+        elements.actionBtns.cbet.style.display = 'none';
+        elements.actionBtns.check.style.display = 'none';
+        elements.actionBtns.fold.style.display = 'inline-block';
+        elements.actionBtns.call.style.display = 'inline-block';
+        elements.actionBtns.raise.style.display = 'inline-block';
+    } else {
+        // Villain checked: Probe Bet/Check
+        elements.actionBtns.cbet.style.display = 'inline-block';
+        elements.actionBtns.cbet.innerHTML = 'Probe Bet<span class="keyboard-hint">[B]</span>';
+        elements.actionBtns.check.style.display = 'inline-block';
+        elements.actionBtns.fold.style.display = 'none';
+        elements.actionBtns.call.style.display = 'none';
+        elements.actionBtns.raise.style.display = 'none';
+    }
+}
+
+function showFacingTurnFeedback(isCorrect, isMixed, mixedFrequency, evChange, userAction) {
+    elements.feedback.classList.remove('correct', 'wrong');
+    elements.feedback.classList.add('show', isCorrect ? 'correct' : 'wrong');
+
+    // Bestimme die korrekte Aktion
+    const correctAction = turnCorrectActionData.isMixed
+        ? Object.entries(turnCorrectActionData.mixedData)
+            .filter(([k, v]) => v > 0)
+            .sort((a, b) => b[1] - a[1])[0][0]
+        : turnCorrectActionData.action;
+
+    // Mappe User-Aktion für Display
+    let displayUserAction = userAction;
+    if (villainTurnAction === 'check' && userAction === 'cbet') {
+        displayUserAction = 'bet';
+    }
+
+    if (isCorrect) {
+        elements.feedbackIcon.textContent = '✓';
+        if (isMixed) {
+            elements.feedbackText.textContent = `Korrekt! (${Math.round(mixedFrequency * 100)}% Frequenz)`;
+            const mixedStr = Object.entries(turnCorrectActionData.mixedData)
+                .filter(([k, v]) => v > 0)
+                .map(([k, v]) => `${Math.round(v * 100)}% ${k}`)
+                .join(' / ');
+            elements.correctAnswer.innerHTML = `Mixed Strategy: ${mixedStr} | <span class="ev-positive">+${evChange} EV</span>`;
+        } else {
+            elements.feedbackText.textContent = 'Richtig!';
+            elements.correctAnswer.innerHTML = `<span class="ev-positive">+${evChange} EV</span>`;
+        }
+        if (elements.explanation) {
+            elements.explanation.innerHTML = '';
+            elements.explanation.style.display = 'none';
+        }
+    } else {
+        elements.feedbackIcon.textContent = '✗';
+        elements.feedbackText.textContent = 'Falsch!';
+
+        const correctActionDisplay = turnCorrectActionData.isMixed
+            ? Object.entries(turnCorrectActionData.mixedData)
+                .filter(([k, v]) => v > 0)
+                .map(([k, v]) => `${Math.round(v * 100)}% ${k}`)
+                .join(' / ')
+            : correctAction.toUpperCase();
+        elements.correctAnswer.innerHTML = `Korrekte Aktion: <strong>${correctActionDisplay}</strong> | <span class="ev-negative">-${evChange} EV</span>`;
+
+        // Facing Turn-spezifische Erklärung
+        if (elements.explanation) {
+            const explanation = getFacingTurnExplanation(displayUserAction, correctAction, turnHandCategory, turnBrought);
+            elements.explanation.innerHTML = explanation;
+            elements.explanation.style.display = 'block';
+        }
+    }
+}
+
+function getFacingTurnExplanation(userAction, correctAction, handCategory, turnType) {
+    const turnTypeNames = {
+        'blank': 'Blank Turn',
+        'flush_completing': 'Flush-Completing Turn',
+        'straight_completing': 'Straight-Completing Turn',
+        'pairing': 'Pairing Turn',
+        'connected': 'Connected Turn'
+    };
+
+    let explanation = `<strong>${turnTypeNames[turnType]}:</strong> `;
+
+    if (villainTurnAction === 'barrel') {
+        // Facing Double Barrel Erklärungen
+        const barrelConcepts = {
+            'blank': 'Villain barrelt auf einem Blank Turn - er repräsentiert weiterhin Stärke. Nur mit starken Händen oder guten Draws weiterspielen.',
+            'flush_completing': 'Ein Flush-Completing Turn macht Villain\'s Barrel glaubwürdiger. Ohne Flush solltest du sehr vorsichtig sein.',
+            'straight_completing': 'Ein Straight-Completing Turn ist gefährlich. Villain kann jetzt viele Straights haben.',
+            'pairing': 'Ein Pairing Turn verändert die Dynamik. Trips werden möglich.',
+            'connected': 'Ein Connected Turn ermöglicht mehr Straights. Villain\'s Range wird stärker.'
+        };
+        explanation += barrelConcepts[turnType] || 'Villain bettet weiter.';
+    } else {
+        // Probe Bet Erklärungen
+        const checkConcepts = {
+            'blank': 'Villain checkt auf einem Blank Turn - das zeigt Schwäche. Du kannst mit Value-Händen und einigen Bluffs proben.',
+            'flush_completing': 'Villain checkt auf einem Flush-Completing Turn. Er hat wahrscheinlich keinen Flush - aber sei vorsichtig mit Bluffs.',
+            'straight_completing': 'Villain\'s Check auf einem Straight-Turn zeigt Schwäche. Probe mit starken Händen und einigen Bluffs.',
+            'pairing': 'Check auf einem Pairing Turn kann Stärke oder Schwäche bedeuten. Probe selektiv.',
+            'connected': 'Villain checkt auf einem Connected Board. Seine Range ist gecappt - du kannst breiter proben.'
+        };
+        explanation += checkConcepts[turnType] || 'Villain zeigt Schwäche mit seinem Check.';
+    }
+
+    explanation += '<br><br>';
+
+    // Hand-spezifische Erklärung
+    const handName = HAND_CATEGORY_NAMES[handCategory] || handCategory;
+
+    if (villainTurnAction === 'barrel') {
+        if (correctAction === 'raise') {
+            explanation += `<strong>Warum Raise?</strong> Mit ${handName} hast du eine sehr starke Hand. Raise für Value!`;
+        } else if (correctAction === 'call') {
+            explanation += `<strong>Warum Call?</strong> Mit ${handName} hast du genug Equity zum Callen, aber nicht zum Raisen.`;
+        } else {
+            explanation += `<strong>Warum Fold?</strong> Mit ${handName} hast du gegen eine Double Barrel zu wenig Equity.`;
+        }
+    } else {
+        if (correctAction === 'bet') {
+            explanation += `<strong>Warum Probe Bet?</strong> Villain hat Schwäche gezeigt. Mit ${handName} kannst du Value holen oder als Bluff betten.`;
+        } else {
+            explanation += `<strong>Warum Check?</strong> Mit ${handName} ist Check behind besser - du hast Showdown Value, aber wenig Fold Equity.`;
+        }
+    }
+
+    return explanation;
+}
+
+function calculateTurnEVLoss(userAction) {
+    const baseValue = HAND_CATEGORY_VALUES[turnHandCategory] || 50;
+    const correctAction = turnCorrectActionData.action;
+
+    // Barrel oder Bet hätte richtig gewesen sein, aber gecheckt
+    if ((correctAction === 'barrel' || correctAction === 'bet') && userAction === 'check') {
         return Math.round(baseValue * 0.5); // Value verloren
     }
-    if (turnCorrectActionData.action === 'check' && userAction === 'barrel') {
+    // Check hätte richtig gewesen sein, aber gebettet/gebarrelt
+    if (correctAction === 'check' && (userAction === 'barrel' || userAction === 'bet')) {
         return Math.round(baseValue * 0.7); // Überbluff
     }
 
@@ -1631,29 +2077,39 @@ function updateScoreDisplay() {
 
     // EV Display
     const netEv = evGainTotal - evLossTotal;
-    elements.netEv.textContent = (netEv >= 0 ? '+' : '') + netEv;
-    elements.netEv.className = 'ev-metric-value ' + (netEv >= 0 ? 'ev-positive' : 'ev-negative');
+    const netEVPer100 = score.total > 0 ? (netEv / score.total) * 100 : 0;
 
-    elements.evGains.textContent = '+' + evGainTotal;
-    elements.evLosses.textContent = '-' + evLossTotal;
+    // Net EV /100h anzeigen
+    const sign = netEVPer100 >= 0 ? '+' : '';
+    elements.evPer100.textContent = sign + netEVPer100.toFixed(0);
+    elements.evPer100.className = 'ev-metric-value ' + (netEVPer100 >= 0 ? 'ev-positive' : 'ev-negative');
 
-    // EV Rating
-    const evPer100 = score.total > 0 ? Math.round((netEv / score.total) * 100) : 0;
-    let ratingClass = 'rating-bad';
-    let ratingText = 'Schlecht';
+    // Gains und Losses anzeigen
+    elements.evGain.textContent = '+' + evGainTotal;
+    elements.evLoss.textContent = '-' + evLossTotal;
 
-    if (evPer100 >= 50) {
-        ratingClass = 'rating-excellent';
-        ratingText = 'Exzellent';
-    } else if (evPer100 >= 30) {
-        ratingClass = 'rating-good';
-        ratingText = 'Gut';
-    } else if (evPer100 >= 10) {
-        ratingClass = 'rating-medium';
-        ratingText = 'OK';
+    // Bewertung basierend auf Net EV/100h (wie Preflop)
+    let rating = '';
+    let ratingClass = '';
+    if (score.total >= 5) {
+        if (netEVPer100 >= 6000) {
+            rating = 'Perfekt';
+            ratingClass = 'rating-excellent';
+        } else if (netEVPer100 >= 4000) {
+            rating = 'Sehr gut';
+            ratingClass = 'rating-excellent';
+        } else if (netEVPer100 >= 2000) {
+            rating = 'Solide';
+            ratingClass = 'rating-good';
+        } else if (netEVPer100 >= 0) {
+            rating = 'Ausbaufähig';
+            ratingClass = 'rating-medium';
+        } else {
+            rating = 'Negativ';
+            ratingClass = 'rating-bad';
+        }
     }
-
-    elements.evRating.textContent = `${evPer100} (${ratingText})`;
+    elements.evRating.textContent = rating;
     elements.evRating.className = 'ev-rating ' + ratingClass;
 }
 
@@ -1756,17 +2212,31 @@ function renderTurnCard() {
 
 function renderTurnScenario() {
     const [heroPos, , villainPos] = currentSpot.split('_');
+    const isDelayedCbet = flopDecision === 'check';
 
-    elements.scenarioText.innerHTML = `
-        <strong>Turn:</strong> Du hast am Flop c-bettet, ${villainPos} callt.<br>
-        <small>Barrel oder Check?</small>
-    `;
+    if (isDelayedCbet) {
+        elements.scenarioText.innerHTML = `
+            <strong>Turn:</strong> Du hast am Flop gecheckt, ${villainPos} checkt behind.<br>
+            <small>Delayed Bet oder Check?</small>
+        `;
+    } else {
+        elements.scenarioText.innerHTML = `
+            <strong>Turn:</strong> Du hast am Flop c-bettet, ${villainPos} callt.<br>
+            <small>Barrel oder Check?</small>
+        `;
+    }
 }
 
 function updateTurnActionButtons() {
-    // Zeige Barrel und Check Buttons
+    const isDelayedCbet = flopDecision === 'check';
+
+    // Zeige Bet/Barrel und Check Buttons
     elements.actionBtns.cbet.style.display = 'inline-block';
-    elements.actionBtns.cbet.innerHTML = 'Barrel<span class="keyboard-hint">[B]</span>';
+    if (isDelayedCbet) {
+        elements.actionBtns.cbet.innerHTML = 'Delayed Bet<span class="keyboard-hint">[B]</span>';
+    } else {
+        elements.actionBtns.cbet.innerHTML = 'Barrel<span class="keyboard-hint">[B]</span>';
+    }
     elements.actionBtns.check.style.display = 'inline-block';
     elements.actionBtns.fold.style.display = 'none';
     elements.actionBtns.call.style.display = 'none';
@@ -1777,6 +2247,8 @@ function showTurnFeedback(isCorrect, isMixed, mixedFrequency, evChange, userActi
     elements.feedback.classList.remove('correct', 'wrong');
     elements.feedback.classList.add('show', isCorrect ? 'correct' : 'wrong');
 
+    const isDelayedCbet = flopDecision === 'check';
+
     // Bestimme die korrekte Aktion
     const correctAction = turnCorrectActionData.isMixed
         ? Object.entries(turnCorrectActionData.mixedData)
@@ -1784,8 +2256,8 @@ function showTurnFeedback(isCorrect, isMixed, mixedFrequency, evChange, userActi
             .sort((a, b) => b[1] - a[1])[0][0]
         : turnCorrectActionData.action;
 
-    // Mappe User-Aktion (cbet -> barrel für Turn)
-    const displayUserAction = userAction === 'cbet' ? 'barrel' : userAction;
+    // Mappe User-Aktion (cbet -> barrel/bet für Turn)
+    const displayUserAction = userAction === 'cbet' ? (isDelayedCbet ? 'bet' : 'barrel') : userAction;
 
     if (isCorrect) {
         elements.feedbackIcon.textContent = '✓';
@@ -1834,8 +2306,12 @@ function getTurnExplanation(userAction, correctAction, handCategory, turnType) {
         'connected': 'Connected Turn'
     };
 
+    const isDelayedCbet = flopDecision === 'check';
+
     const turnConcepts = {
-        'blank': 'Ein Blank Turn ändert die Board-Texture kaum. Starke Hände können weiter barreln, schwache Hände sollten aufgeben.',
+        'blank': isDelayedCbet
+            ? 'Ein Blank Turn nach Flop-Check ist oft gut für eine Delayed Bet - Villain hat Schwäche gezeigt.'
+            : 'Ein Blank Turn ändert die Board-Texture kaum. Starke Hände können weiter barreln, schwache Hände sollten aufgeben.',
         'flush_completing': 'Ein Flush-Completing Turn ist gefährlich. Ohne Flush solltest du vorsichtiger sein.',
         'straight_completing': 'Ein Straight-Completing Turn ermöglicht mehr Made Hands beim Gegner.',
         'pairing': 'Ein Pairing Turn kann für dich gut sein (Full House) oder schlecht (Trips für Gegner).',
@@ -1846,8 +2322,12 @@ function getTurnExplanation(userAction, correctAction, handCategory, turnType) {
 
     // Hand-spezifische Erklärung
     const handName = HAND_CATEGORY_NAMES[handCategory] || handCategory;
-    if (correctAction === 'barrel') {
-        explanation += `<strong>Warum Barrel?</strong> Mit ${handName} hast du genug Value/Equity um weiter zu betten.`;
+    if (correctAction === 'barrel' || correctAction === 'bet') {
+        if (isDelayedCbet) {
+            explanation += `<strong>Warum Delayed Bet?</strong> Mit ${handName} hast du nach dem gechecked Flop genug Value/Equity um jetzt zu betten.`;
+        } else {
+            explanation += `<strong>Warum Barrel?</strong> Mit ${handName} hast du genug Value/Equity um weiter zu betten.`;
+        }
     } else {
         explanation += `<strong>Warum Check?</strong> Mit ${handName} auf diesem Turn ist Check besser - du kontrollierst den Pot.`;
     }

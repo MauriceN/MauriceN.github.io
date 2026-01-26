@@ -903,6 +903,65 @@ body {
     font-weight: bold;
 }
 
+/* EV Legend */
+.ev-legend {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.ev-legend h4 {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    color: #c0e0c0;
+    text-align: center;
+}
+
+.ev-legend table {
+    width: 100%;
+    font-size: 0.8rem;
+}
+
+.ev-legend td {
+    padding: 6px 4px;
+}
+
+.ev-legend td:first-child {
+    font-weight: bold;
+    text-align: center;
+    border-radius: 4px;
+    width: 55px;
+    padding: 5px 8px;
+}
+
+.ev-legend td:last-child {
+    color: #a0d0a0;
+    padding-left: 10px;
+}
+
+/* Stats Reset (EV Sidebar) */
+.stats-reset {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.ev-sidebar .reset-btn {
+    background: transparent;
+    border: 1px solid rgba(244, 67, 54, 0.5);
+    color: #f44336;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: auto;
+}
+
+.ev-sidebar .reset-btn:hover {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: #f44336;
+}
+
 /* ============================================
    TURN STYLES
    ============================================ */

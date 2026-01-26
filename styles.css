@@ -207,6 +207,11 @@ body {
     color: rgba(255,255,255,0.3);
 }
 
+.range-cell.limp {
+    background: rgba(156, 39, 176, 0.7);
+    color: #fff;
+}
+
 /* Equity-based gradient colors */
 .range-cell.equity-90 { background: rgba(76, 175, 80, 0.9); color: #fff; }
 .range-cell.equity-80 { background: rgba(102, 187, 106, 0.85); color: #fff; }
@@ -277,6 +282,11 @@ body {
 .legend-item.fold {
     background: rgba(255,255,255,0.1);
     color: rgba(255,255,255,0.5);
+}
+
+.legend-item.limp {
+    background: rgba(156, 39, 176, 0.7);
+    color: #fff;
 }
 
 .legend-item.mixed {
@@ -481,6 +491,11 @@ h1 {
 
 .action-btn.raise {
     background: #f44336;
+    color: #fff;
+}
+
+.action-btn.limp {
+    background: #9c27b0;
     color: #fff;
 }
 

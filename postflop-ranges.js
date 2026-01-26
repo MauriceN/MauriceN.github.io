@@ -425,53 +425,57 @@ const FACING_CBET_RANGES = {
     // ========================================
     BB_vs_BTN: {
         dry: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw_oesd'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair', 'flush_draw', 'oesd'
+                'second_pair', 'flush_draw', 'oesd',
+                'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'
             ],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.4, fold: 0.6 },
                 { category: 'gutshot', call: 0.5, fold: 0.5 },
                 { category: 'overcards', call: 0.35, fold: 0.65 },
-                { category: 'ace_high', call: 0.25, fold: 0.75 }
+                { category: 'ace_high', call: 0.25, fold: 0.75 },
+                { category: 'pair_gutshot', call: 0.6, fold: 0.4 }
             ]
         },
         wet: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd', 'flush_draw_oesd', 'pair_flush_draw'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair'
+                'second_pair', 'pair_oesd', 'flush_draw_gutshot'
             ],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.35, fold: 0.65 },
                 { category: 'gutshot', call: 0.55, fold: 0.45 },
-                { category: 'overcards', call: 0.3, fold: 0.7 }
+                { category: 'overcards', call: 0.3, fold: 0.7 },
+                { category: 'pair_gutshot', call: 0.55, fold: 0.45 }
             ]
         },
         paired: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
             call: [
                 'two_pair', 'overpair', 'top_pair_good',
-                'flush_draw', 'oesd'
+                'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'
             ],
             fold: ['low_pair', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.7, fold: 0.3 },
                 { category: 'second_pair', call: 0.5, fold: 0.5 },
                 { category: 'gutshot', call: 0.45, fold: 0.55 },
-                { category: 'overcards', call: 0.4, fold: 0.6 }
+                { category: 'overcards', call: 0.4, fold: 0.6 },
+                { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
             ]
         },
         monotone: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw', 'flush_draw_oesd', 'pair_flush_draw'],
             call: [
                 'set', 'two_pair', 'overpair',
-                'top_pair_good', 'oesd'
+                'top_pair_good', 'oesd', 'flush_draw_gutshot'
             ],
-            fold: ['low_pair', 'ace_high', 'nothing'],
+            fold: ['low_pair', 'ace_high', 'nothing', 'pair_oesd', 'pair_gutshot'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.6, fold: 0.4 },
                 { category: 'second_pair', call: 0.4, fold: 0.6 },
@@ -480,16 +484,17 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd', 'flush_draw_oesd'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair', 'flush_draw'
+                'second_pair', 'flush_draw', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'
             ],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.4, fold: 0.6 },
                 { category: 'gutshot', call: 0.6, fold: 0.4 },
-                { category: 'overcards', call: 0.35, fold: 0.65 }
+                { category: 'overcards', call: 0.35, fold: 0.65 },
+                { category: 'pair_gutshot', call: 0.6, fold: 0.4 }
             ]
         }
     },
@@ -499,44 +504,48 @@ const FACING_CBET_RANGES = {
     // ========================================
     BB_vs_CO: {
         dry: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw_oesd'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair', 'flush_draw', 'oesd'
+                'second_pair', 'flush_draw', 'oesd',
+                'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'
             ],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.35, fold: 0.65 },
                 { category: 'gutshot', call: 0.45, fold: 0.55 },
                 { category: 'overcards', call: 0.3, fold: 0.7 },
-                { category: 'ace_high', call: 0.2, fold: 0.8 }
+                { category: 'ace_high', call: 0.2, fold: 0.8 },
+                { category: 'pair_gutshot', call: 0.55, fold: 0.45 }
             ]
         },
         wet: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'pair_oesd', 'flush_draw_gutshot'],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.3, fold: 0.7 },
                 { category: 'gutshot', call: 0.5, fold: 0.5 },
-                { category: 'overcards', call: 0.25, fold: 0.75 }
+                { category: 'overcards', call: 0.25, fold: 0.75 },
+                { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
             ]
         },
         paired: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
-            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
             fold: ['low_pair', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.65, fold: 0.35 },
                 { category: 'second_pair', call: 0.45, fold: 0.55 },
                 { category: 'gutshot', call: 0.4, fold: 0.6 },
-                { category: 'overcards', call: 0.35, fold: 0.65 }
+                { category: 'overcards', call: 0.35, fold: 0.65 },
+                { category: 'pair_gutshot', call: 0.45, fold: 0.55 }
             ]
         },
         monotone: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
-            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
-            fold: ['low_pair', 'ace_high', 'nothing'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd', 'flush_draw_gutshot'],
+            fold: ['low_pair', 'ace_high', 'nothing', 'pair_oesd', 'pair_gutshot'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.55, fold: 0.45 },
                 { category: 'second_pair', call: 0.35, fold: 0.65 },
@@ -545,13 +554,14 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd', 'flush_draw_oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.35, fold: 0.65 },
                 { category: 'gutshot', call: 0.55, fold: 0.45 },
-                { category: 'overcards', call: 0.3, fold: 0.7 }
+                { category: 'overcards', call: 0.3, fold: 0.7 },
+                { category: 'pair_gutshot', call: 0.55, fold: 0.45 }
             ]
         }
     },
@@ -562,10 +572,11 @@ const FACING_CBET_RANGES = {
     BB_vs_SB: {
         // BB hat Position -> kann mehr defenden
         dry: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw_oesd'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair', 'flush_draw', 'oesd', 'gutshot'
+                'second_pair', 'flush_draw', 'oesd', 'gutshot',
+                'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot', 'pair_gutshot'
             ],
             fold: ['nothing'],
             mixed: [
@@ -575,8 +586,8 @@ const FACING_CBET_RANGES = {
             ]
         },
         wet: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'gutshot'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'gutshot', 'pair_oesd', 'flush_draw_gutshot', 'pair_gutshot'],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.45, fold: 0.55 },
@@ -585,21 +596,22 @@ const FACING_CBET_RANGES = {
             ]
         },
         paired: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
-            call: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'flush_draw', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
             fold: ['nothing'],
             mixed: [
                 { category: 'second_pair', call: 0.6, fold: 0.4 },
                 { category: 'low_pair', call: 0.4, fold: 0.6 },
                 { category: 'gutshot', call: 0.5, fold: 0.5 },
                 { category: 'overcards', call: 0.45, fold: 0.55 },
-                { category: 'ace_high', call: 0.35, fold: 0.65 }
+                { category: 'ace_high', call: 0.35, fold: 0.65 },
+                { category: 'pair_gutshot', call: 0.55, fold: 0.45 }
             ]
         },
         monotone: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
-            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
-            fold: ['nothing'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd', 'flush_draw_gutshot'],
+            fold: ['nothing', 'pair_oesd', 'pair_gutshot'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.65, fold: 0.35 },
                 { category: 'second_pair', call: 0.5, fold: 0.5 },
@@ -610,13 +622,14 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'gutshot'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd', 'flush_draw_oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'gutshot', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.5, fold: 0.5 },
                 { category: 'overcards', call: 0.4, fold: 0.6 },
-                { category: 'ace_high', call: 0.3, fold: 0.7 }
+                { category: 'ace_high', call: 0.3, fold: 0.7 },
+                { category: 'pair_gutshot', call: 0.6, fold: 0.4 }
             ]
         }
     },
@@ -627,10 +640,11 @@ const FACING_CBET_RANGES = {
     // ========================================
     BTN_vs_CO: {
         dry: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw_oesd'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair', 'flush_draw', 'oesd', 'gutshot'
+                'second_pair', 'flush_draw', 'oesd', 'gutshot',
+                'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot', 'pair_gutshot'
             ],
             fold: ['nothing'],
             mixed: [
@@ -640,8 +654,8 @@ const FACING_CBET_RANGES = {
             ]
         },
         wet: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'gutshot'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'gutshot', 'pair_oesd', 'flush_draw_gutshot', 'pair_gutshot'],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.5, fold: 0.5 },
@@ -650,21 +664,22 @@ const FACING_CBET_RANGES = {
             ]
         },
         paired: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
-            call: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'flush_draw', 'oesd'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
             fold: ['nothing'],
             mixed: [
                 { category: 'second_pair', call: 0.65, fold: 0.35 },
                 { category: 'low_pair', call: 0.45, fold: 0.55 },
                 { category: 'gutshot', call: 0.55, fold: 0.45 },
                 { category: 'overcards', call: 0.5, fold: 0.5 },
-                { category: 'ace_high', call: 0.4, fold: 0.6 }
+                { category: 'ace_high', call: 0.4, fold: 0.6 },
+                { category: 'pair_gutshot', call: 0.6, fold: 0.4 }
             ]
         },
         monotone: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
-            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
-            fold: ['nothing'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd', 'flush_draw_gutshot'],
+            fold: ['nothing', 'pair_oesd', 'pair_gutshot'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.7, fold: 0.3 },
                 { category: 'second_pair', call: 0.55, fold: 0.45 },
@@ -675,13 +690,14 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'gutshot'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd', 'flush_draw_oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'gutshot', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.55, fold: 0.45 },
                 { category: 'overcards', call: 0.45, fold: 0.55 },
-                { category: 'ace_high', call: 0.35, fold: 0.65 }
+                { category: 'ace_high', call: 0.35, fold: 0.65 },
+                { category: 'pair_gutshot', call: 0.6, fold: 0.4 }
             ]
         }
     },
@@ -695,19 +711,22 @@ const FACING_CBET_RANGES = {
             raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair', 'flush_draw', 'oesd'
+                'second_pair', 'flush_draw', 'oesd',
+                'flush_draw_oesd', 'pair_flush_draw', 'pair_oesd'
             ],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.45, fold: 0.55 },
                 { category: 'gutshot', call: 0.55, fold: 0.45 },
                 { category: 'overcards', call: 0.4, fold: 0.6 },
-                { category: 'ace_high', call: 0.3, fold: 0.7 }
+                { category: 'ace_high', call: 0.3, fold: 0.7 },
+                { category: 'pair_gutshot', call: 0.6, fold: 0.4 },
+                { category: 'flush_draw_gutshot', call: 0.7, fold: 0.3 }
             ]
         },
         wet: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd', 'flush_draw_oesd', 'pair_flush_draw', 'pair_oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw_gutshot', 'pair_gutshot'],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.4, fold: 0.6 },
@@ -717,20 +736,22 @@ const FACING_CBET_RANGES = {
         },
         paired: {
             raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
-            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_oesd'],
             fold: ['low_pair', 'nothing'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.7, fold: 0.3 },
                 { category: 'second_pair', call: 0.55, fold: 0.45 },
                 { category: 'gutshot', call: 0.5, fold: 0.5 },
                 { category: 'overcards', call: 0.4, fold: 0.6 },
-                { category: 'ace_high', call: 0.3, fold: 0.7 }
+                { category: 'ace_high', call: 0.3, fold: 0.7 },
+                { category: 'pair_gutshot', call: 0.55, fold: 0.45 },
+                { category: 'flush_draw_gutshot', call: 0.65, fold: 0.35 }
             ]
         },
         monotone: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
-            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
-            fold: ['low_pair', 'ace_high', 'nothing'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd', 'flush_draw_gutshot'],
+            fold: ['low_pair', 'ace_high', 'nothing', 'pair_oesd', 'pair_gutshot'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.6, fold: 0.4 },
                 { category: 'second_pair', call: 0.45, fold: 0.55 },
@@ -739,13 +760,14 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd', 'flush_draw_oesd', 'pair_oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'pair_flush_draw', 'flush_draw_gutshot'],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.45, fold: 0.55 },
                 { category: 'gutshot', call: 0.6, fold: 0.4 },
-                { category: 'overcards', call: 0.4, fold: 0.6 }
+                { category: 'overcards', call: 0.4, fold: 0.6 },
+                { category: 'pair_gutshot', call: 0.55, fold: 0.45 }
             ]
         }
     },
@@ -759,19 +781,22 @@ const FACING_CBET_RANGES = {
             raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
             call: [
                 'overpair', 'top_pair_good', 'top_pair_weak',
-                'second_pair', 'flush_draw', 'oesd'
+                'second_pair', 'flush_draw', 'oesd',
+                'flush_draw_oesd', 'pair_flush_draw', 'pair_oesd'
             ],
             fold: ['nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.4, fold: 0.6 },
                 { category: 'gutshot', call: 0.5, fold: 0.5 },
                 { category: 'overcards', call: 0.35, fold: 0.65 },
-                { category: 'ace_high', call: 0.25, fold: 0.75 }
+                { category: 'ace_high', call: 0.25, fold: 0.75 },
+                { category: 'pair_gutshot', call: 0.55, fold: 0.45 },
+                { category: 'flush_draw_gutshot', call: 0.65, fold: 0.35 }
             ]
         },
         wet: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'flush_draw', 'oesd', 'flush_draw_oesd', 'pair_flush_draw', 'pair_oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw_gutshot', 'pair_gutshot'],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.35, fold: 0.65 },
@@ -781,19 +806,21 @@ const FACING_CBET_RANGES = {
         },
         paired: {
             raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
-            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd'],
+            call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_oesd'],
             fold: ['low_pair', 'ace_high', 'nothing'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.65, fold: 0.35 },
                 { category: 'second_pair', call: 0.5, fold: 0.5 },
                 { category: 'gutshot', call: 0.45, fold: 0.55 },
-                { category: 'overcards', call: 0.35, fold: 0.65 }
+                { category: 'overcards', call: 0.35, fold: 0.65 },
+                { category: 'pair_gutshot', call: 0.5, fold: 0.5 },
+                { category: 'flush_draw_gutshot', call: 0.6, fold: 0.4 }
             ]
         },
         monotone: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw'],
-            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd'],
-            fold: ['low_pair', 'ace_high', 'nothing'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'flush_draw', 'flush_draw_oesd', 'pair_flush_draw'],
+            call: ['set', 'two_pair', 'overpair', 'top_pair_good', 'oesd', 'flush_draw_gutshot'],
+            fold: ['low_pair', 'ace_high', 'nothing', 'pair_oesd', 'pair_gutshot'],
             mixed: [
                 { category: 'top_pair_weak', call: 0.55, fold: 0.45 },
                 { category: 'second_pair', call: 0.4, fold: 0.6 },
@@ -802,13 +829,14 @@ const FACING_CBET_RANGES = {
             ]
         },
         connected: {
-            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd'],
-            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw'],
+            raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'oesd', 'flush_draw_oesd', 'pair_oesd'],
+            call: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'flush_draw', 'pair_flush_draw', 'flush_draw_gutshot'],
             fold: ['ace_high', 'nothing'],
             mixed: [
                 { category: 'low_pair', call: 0.4, fold: 0.6 },
                 { category: 'gutshot', call: 0.55, fold: 0.45 },
-                { category: 'overcards', call: 0.35, fold: 0.65 }
+                { category: 'overcards', call: 0.35, fold: 0.65 },
+                { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
             ]
         }
     }
@@ -833,6 +861,14 @@ const HAND_CATEGORY_VALUES = {
     'top_pair_weak': 60,
     'second_pair': 45,
     'low_pair': 30,
+    // Combo Draws - Pair + Draw (sehr stark wegen Outs)
+    'pair_flush_draw': 65,      // ~12 Outs - stärker als Top Pair weak
+    'pair_oesd': 60,            // ~11 Outs
+    'pair_gutshot': 45,         // ~7 Outs
+    // Monster Draws (Flush Draw + Straight Draw)
+    'flush_draw_oesd': 75,      // ~15 Outs - Monster Draw!
+    'flush_draw_gutshot': 65,   // ~12 Outs
+    // Standard Draws
     'flush_draw': 55,
     'oesd': 50,
     'gutshot': 35,
@@ -1753,9 +1789,842 @@ const TURN_BARREL_RANGES = {
     BTN_vs_SB: null  // Wird von Code als Fallback zu BTN_vs_BB behandelt
 };
 
+// ============================================
+// DELAYED C-BET RANGES (Turn nach Flop-Check)
+// ============================================
+// Nach einem Check auf dem Flop zeigen wir Schwäche.
+// Am Turn betten wir mit: Traps, verbesserte Hände, Draws die ankommen, selektive Bluffs.
+// Generell: Tighter als nach C-Bet, da Villain Range stärker ist.
+
+const DELAYED_CBET_RANGES = {
+    // ========================================
+    // BTN vs BB Delayed C-Bet
+    // ========================================
+    BTN_vs_BB: {
+        dry: {
+            blank: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair', 'top_pair_good'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high'],
+                mixed: [
+                    { category: 'top_pair_weak', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 },
+                    { category: 'overcards', bet: 0.3, check: 0.7 }
+                ]
+            },
+            flush_completing: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'full_house', 'trips', 'set'
+                ],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 },
+                    { category: 'straight', bet: 0.7, check: 0.3 }
+                ]
+            },
+            straight_completing: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'
+                ],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 },
+                    { category: 'oesd', bet: 0.3, check: 0.7 }
+                ]
+            },
+            pairing: {
+                bet: [
+                    'straight_flush', 'quads', 'full_house', 'trips', 'set', 'two_pair'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'flush', bet: 0.8, check: 0.2 },
+                    { category: 'straight', bet: 0.8, check: 0.2 }
+                ]
+            },
+            connected: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            }
+        },
+        wet: {
+            blank: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair', 'top_pair_good'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_weak', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.7, check: 0.3 },
+                    { category: 'oesd', bet: 0.6, check: 0.4 }
+                ]
+            },
+            flush_completing: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'full_house'
+                ],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'trips', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'straight', bet: 0.6, check: 0.4 }
+                ]
+            },
+            straight_completing: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'overpair', bet: 0.4, check: 0.6 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 },
+                    { category: 'oesd', bet: 0.4, check: 0.6 }
+                ]
+            },
+            pairing: {
+                bet: [
+                    'straight_flush', 'quads', 'full_house', 'trips', 'set'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'flush', bet: 0.8, check: 0.2 },
+                    { category: 'straight', bet: 0.7, check: 0.3 }
+                ]
+            },
+            connected: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            }
+        },
+        paired: {
+            blank: {
+                bet: [
+                    'straight_flush', 'quads', 'full_house', 'flush', 'straight', 'trips', 'set'
+                ],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.7, check: 0.3 },
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'full_house', 'flush'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'trips', bet: 0.5, check: 0.5 },
+                    { category: 'set', bet: 0.6, check: 0.4 },
+                    { category: 'two_pair', bet: 0.4, check: 0.6 },
+                    { category: 'straight', bet: 0.5, check: 0.5 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'full_house', 'flush', 'straight', 'trips', 'set'],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 },
+                    { category: 'oesd', bet: 0.3, check: 0.7 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'trips', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'flush', bet: 0.7, check: 0.3 },
+                    { category: 'straight', bet: 0.6, check: 0.4 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'full_house', 'flush', 'straight', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 },
+                    { category: 'oesd', bet: 0.4, check: 0.6 }
+                ]
+            }
+        },
+        monotone: {
+            blank: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'trips', bet: 0.5, check: 0.5 },
+                    { category: 'set', bet: 0.6, check: 0.4 },
+                    { category: 'two_pair', bet: 0.4, check: 0.6 },
+                    { category: 'straight', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'flush'],
+                check: ['trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'full_house', bet: 0.8, check: 0.2 },
+                    { category: 'straight', bet: 0.4, check: 0.6 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'straight', bet: 0.5, check: 0.5 },
+                    { category: 'trips', bet: 0.4, check: 0.6 },
+                    { category: 'set', bet: 0.5, check: 0.5 },
+                    { category: 'two_pair', bet: 0.3, check: 0.7 },
+                    { category: 'oesd', bet: 0.3, check: 0.7 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'full_house', 'flush'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'trips', bet: 0.5, check: 0.5 },
+                    { category: 'set', bet: 0.6, check: 0.4 },
+                    { category: 'two_pair', bet: 0.4, check: 0.6 },
+                    { category: 'straight', bet: 0.5, check: 0.5 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'straight', bet: 0.5, check: 0.5 },
+                    { category: 'trips', bet: 0.4, check: 0.6 },
+                    { category: 'set', bet: 0.5, check: 0.5 },
+                    { category: 'two_pair', bet: 0.3, check: 0.7 },
+                    { category: 'flush_draw', bet: 0.4, check: 0.6 }
+                ]
+            }
+        },
+        connected: {
+            blank: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'top_pair_good', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'straight', bet: 0.5, check: 0.5 },
+                    { category: 'trips', bet: 0.5, check: 0.5 },
+                    { category: 'set', bet: 0.6, check: 0.4 },
+                    { category: 'two_pair', bet: 0.4, check: 0.6 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house'],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'trips', bet: 0.5, check: 0.5 },
+                    { category: 'set', bet: 0.6, check: 0.4 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 },
+                    { category: 'oesd', bet: 0.4, check: 0.6 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'full_house', 'flush', 'straight', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'overcards', 'ace_high', 'nothing'],
+                mixed: [
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', bet: 0.3, check: 0.7 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 },
+                    { category: 'oesd', bet: 0.4, check: 0.6 }
+                ]
+            }
+        }
+    },
+    // CO_vs_BB und SB_vs_BB fallen auf BTN_vs_BB zurück (vereinfacht)
+    CO_vs_BB: null, // Verwendet BTN_vs_BB als Fallback
+    SB_vs_BB: null  // Verwendet BTN_vs_BB als Fallback
+};
+
+// ============================================
+// FACING TURN BARREL RANGES (Villain Double Barrels)
+// Hero hat Flop C-Bet gecallt, Villain bettet Turn erneut
+// ============================================
+
+const FACING_TURN_BARREL_RANGES = {
+    // ========================================
+    // BB vs BTN - Facing Double Barrel
+    // ========================================
+    BB_vs_BTN: {
+        dry: {
+            blank: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'flush_draw_oesd'],
+                call: ['trips', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.6, fold: 0.4 },
+                    { category: 'underpair_high', call: 0.4, fold: 0.6 },
+                    { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
+                ]
+            },
+            flush_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house'],
+                call: ['set', 'trips', 'two_pair', 'straight', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_gutshot'],
+                mixed: [
+                    { category: 'flush_draw', call: 0.3, fold: 0.7 },
+                    { category: 'pair_flush_draw', call: 0.4, fold: 0.6 },
+                    { category: 'pair_oesd', call: 0.3, fold: 0.7 }
+                ]
+            },
+            straight_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'flush_draw_oesd'],
+                call: ['trips', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'pair_flush_draw', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_gutshot'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.5, fold: 0.5 },
+                    { category: 'oesd', call: 0.4, fold: 0.6 },
+                    { category: 'pair_oesd', call: 0.5, fold: 0.5 }
+                ]
+            },
+            pairing: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'trips', 'flush_draw_oesd'],
+                call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.5, fold: 0.5 },
+                    { category: 'pair_gutshot', call: 0.4, fold: 0.6 }
+                ]
+            },
+            connected: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'flush_draw_oesd'],
+                call: ['trips', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.5, fold: 0.5 },
+                    { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
+                ]
+            }
+        },
+        wet: {
+            blank: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'flush_draw_oesd'],
+                call: ['trips', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.5, fold: 0.5 },
+                    { category: 'pair_gutshot', call: 0.4, fold: 0.6 }
+                ]
+            },
+            flush_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house'],
+                call: ['set', 'trips', 'two_pair', 'straight', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_flush_draw', 'pair_oesd', 'pair_gutshot'],
+                mixed: []
+            },
+            straight_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'flush_draw_oesd'],
+                call: ['trips', 'two_pair', 'overpair', 'flush_draw', 'pair_flush_draw', 'flush_draw_gutshot'],
+                fold: ['top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_gutshot'],
+                mixed: [
+                    { category: 'pair_oesd', call: 0.4, fold: 0.6 }
+                ]
+            },
+            pairing: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'trips', 'flush_draw_oesd'],
+                call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.4, fold: 0.6 },
+                    { category: 'pair_gutshot', call: 0.4, fold: 0.6 }
+                ]
+            },
+            connected: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'flush_draw_oesd'],
+                call: ['trips', 'two_pair', 'overpair', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'pair_gutshot', call: 0.4, fold: 0.6 }
+                ]
+            }
+        },
+        paired: {
+            blank: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
+                call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.5, fold: 0.5 },
+                    { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
+                ]
+            },
+            flush_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house', 'trips'],
+                call: ['set', 'two_pair', 'straight', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_flush_draw', 'pair_oesd', 'pair_gutshot'],
+                mixed: []
+            },
+            straight_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
+                call: ['two_pair', 'overpair', 'flush_draw', 'pair_flush_draw', 'flush_draw_gutshot'],
+                fold: ['top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_gutshot'],
+                mixed: [
+                    { category: 'pair_oesd', call: 0.4, fold: 0.6 }
+                ]
+            },
+            pairing: {
+                raise: ['straight_flush', 'quads', 'full_house'],
+                call: ['flush', 'straight', 'trips', 'set', 'two_pair', 'overpair', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'pair_gutshot', call: 0.4, fold: 0.6 }
+                ]
+            },
+            connected: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
+                call: ['two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.4, fold: 0.6 },
+                    { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
+                ]
+            }
+        },
+        monotone: {
+            blank: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house'],
+                call: ['straight', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_oesd', 'pair_gutshot'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.4, fold: 0.6 },
+                    { category: 'flush_draw', call: 0.7, fold: 0.3 },
+                    { category: 'pair_flush_draw', call: 0.8, fold: 0.2 }
+                ]
+            },
+            flush_completing: {
+                raise: ['straight_flush', 'quads', 'flush'],
+                call: ['full_house', 'straight', 'set', 'trips'],
+                fold: ['two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_flush_draw', 'pair_oesd', 'pair_gutshot', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                mixed: []
+            },
+            straight_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house'],
+                call: ['straight', 'trips', 'set', 'two_pair', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_oesd', 'pair_gutshot'],
+                mixed: [
+                    { category: 'pair_flush_draw', call: 0.6, fold: 0.4 }
+                ]
+            },
+            pairing: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house'],
+                call: ['straight', 'trips', 'set', 'two_pair', 'overpair', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_oesd', 'pair_gutshot'],
+                mixed: [
+                    { category: 'pair_flush_draw', call: 0.6, fold: 0.4 }
+                ]
+            },
+            connected: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house'],
+                call: ['straight', 'trips', 'set', 'two_pair', 'overpair', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_oesd', 'pair_gutshot'],
+                mixed: [
+                    { category: 'pair_flush_draw', call: 0.6, fold: 0.4 }
+                ]
+            }
+        },
+        connected: {
+            blank: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'set', 'flush_draw_oesd'],
+                call: ['trips', 'two_pair', 'overpair', 'top_pair_good', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_weak', call: 0.5, fold: 0.5 },
+                    { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
+                ]
+            },
+            flush_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house'],
+                call: ['straight', 'set', 'trips', 'two_pair', 'flush_draw_oesd', 'flush_draw_gutshot'],
+                fold: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_flush_draw', 'pair_oesd', 'pair_gutshot'],
+                mixed: []
+            },
+            straight_completing: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house', 'flush_draw_oesd'],
+                call: ['straight', 'set', 'trips', 'two_pair', 'flush_draw', 'pair_flush_draw', 'flush_draw_gutshot'],
+                fold: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards', 'pair_gutshot'],
+                mixed: [
+                    { category: 'pair_oesd', call: 0.4, fold: 0.6 }
+                ]
+            },
+            pairing: {
+                raise: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'flush_draw_oesd'],
+                call: ['two_pair', 'overpair', 'flush_draw', 'oesd', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'pair_gutshot', call: 0.4, fold: 0.6 }
+                ]
+            },
+            connected: {
+                raise: ['straight_flush', 'quads', 'flush', 'full_house', 'flush_draw_oesd'],
+                call: ['straight', 'set', 'trips', 'two_pair', 'flush_draw', 'pair_flush_draw', 'pair_oesd', 'flush_draw_gutshot'],
+                fold: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'nothing', 'ace_high', 'overcards'],
+                mixed: [
+                    { category: 'pair_gutshot', call: 0.5, fold: 0.5 }
+                ]
+            }
+        }
+    },
+    // Andere Spots fallen auf BB_vs_BTN zurück
+    BB_vs_CO: null,
+    BB_vs_SB: null,
+    BTN_vs_CO: null,
+    BTN_vs_HJ: null,
+    CO_vs_HJ: null
+};
+
+// ============================================
+// PROBE BET RANGES (Villain checkt Turn)
+// Hero hat Flop C-Bet gecallt, Villain checkt Turn
+// ============================================
+
+const PROBE_BET_RANGES = {
+    // ========================================
+    // BB vs BTN - Probe Bet (Villain zeigt Schwäche)
+    // ========================================
+    BB_vs_BTN: {
+        dry: {
+            blank: {
+                bet: [
+                    'straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips',
+                    'set', 'two_pair', 'overpair', 'top_pair_good'
+                ],
+                check: ['second_pair', 'low_pair', 'gutshot', 'nothing', 'ace_high'],
+                mixed: [
+                    { category: 'top_pair_weak', bet: 0.6, check: 0.4 },
+                    { category: 'flush_draw', bet: 0.7, check: 0.3 },
+                    { category: 'oesd', bet: 0.6, check: 0.4 },
+                    { category: 'overcards', bet: 0.4, check: 0.6 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', bet: 0.3, check: 0.7 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'overpair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 },
+                    { category: 'oesd', bet: 0.4, check: 0.6 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_good', bet: 0.7, check: 0.3 },
+                    { category: 'top_pair_weak', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'overpair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            }
+        },
+        wet: {
+            blank: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_good', bet: 0.7, check: 0.3 },
+                    { category: 'top_pair_weak', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.8, check: 0.2 },
+                    { category: 'oesd', bet: 0.7, check: 0.3 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.6, check: 0.4 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.4, check: 0.6 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'overpair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            }
+        },
+        paired: {
+            blank: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair', 'overpair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'top_pair_good', bet: 0.7, check: 0.3 },
+                    { category: 'top_pair_weak', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.6, check: 0.4 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'full_house', 'trips'],
+                check: ['overpair', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'flush', bet: 0.7, check: 0.3 },
+                    { category: 'straight', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.8, check: 0.2 },
+                    { category: 'two_pair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.4, check: 0.6 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'overpair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 },
+                    { category: 'oesd', bet: 0.5, check: 0.5 }
+                ]
+            }
+        },
+        monotone: {
+            blank: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.6, check: 0.4 },
+                    { category: 'overpair', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'top_pair_weak', bet: 0.3, check: 0.7 },
+                    { category: 'flush_draw', bet: 0.8, check: 0.2 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'flush'],
+                check: ['straight', 'trips', 'set', 'two_pair', 'overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'flush_draw', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'full_house', bet: 0.8, check: 0.2 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.6, check: 0.4 },
+                    { category: 'trips', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house', 'trips'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.5, check: 0.5 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.5, check: 0.5 },
+                    { category: 'trips', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.6, check: 0.4 }
+                ]
+            }
+        },
+        connected: {
+            blank: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set', 'two_pair'],
+                check: ['second_pair', 'low_pair', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'overpair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_weak', bet: 0.4, check: 0.6 },
+                    { category: 'flush_draw', bet: 0.7, check: 0.3 },
+                    { category: 'oesd', bet: 0.6, check: 0.4 }
+                ]
+            },
+            flush_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.6, check: 0.4 },
+                    { category: 'trips', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 }
+                ]
+            },
+            straight_completing: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.7, check: 0.3 },
+                    { category: 'trips', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 }
+                ]
+            },
+            pairing: {
+                bet: ['straight_flush', 'quads', 'flush', 'straight', 'full_house', 'trips', 'set'],
+                check: ['top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'two_pair', bet: 0.7, check: 0.3 },
+                    { category: 'overpair', bet: 0.6, check: 0.4 },
+                    { category: 'top_pair_good', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 }
+                ]
+            },
+            connected: {
+                bet: ['straight_flush', 'quads', 'flush', 'full_house'],
+                check: ['overpair', 'top_pair_good', 'top_pair_weak', 'second_pair', 'low_pair', 'oesd', 'gutshot', 'ace_high', 'nothing', 'overcards'],
+                mixed: [
+                    { category: 'straight', bet: 0.7, check: 0.3 },
+                    { category: 'trips', bet: 0.6, check: 0.4 },
+                    { category: 'set', bet: 0.7, check: 0.3 },
+                    { category: 'two_pair', bet: 0.5, check: 0.5 },
+                    { category: 'flush_draw', bet: 0.5, check: 0.5 }
+                ]
+            }
+        }
+    },
+    // Andere Spots fallen auf BB_vs_BTN zurück
+    BB_vs_CO: null,
+    BB_vs_SB: null,
+    BTN_vs_CO: null,
+    BTN_vs_HJ: null,
+    CO_vs_HJ: null
+};
+
 // Export für postflop.js
 window.CBET_RANGES = CBET_RANGES;
 window.FACING_CBET_RANGES = FACING_CBET_RANGES;
 window.HAND_CATEGORY_VALUES = HAND_CATEGORY_VALUES;
 window.TEXTURE_INFO = TEXTURE_INFO;
 window.TURN_BARREL_RANGES = TURN_BARREL_RANGES;
+window.DELAYED_CBET_RANGES = DELAYED_CBET_RANGES;
+window.FACING_TURN_BARREL_RANGES = FACING_TURN_BARREL_RANGES;
+window.PROBE_BET_RANGES = PROBE_BET_RANGES;
