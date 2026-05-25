@@ -5,7 +5,7 @@ const SUITS = ['s', 'h', 'd', 'c']; // spades, hearts, diamonds, clubs
 const SUIT_SYMBOLS = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const SUIT_NAMES = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
 
-let currentMode = 'rfi'; // 'rfi', '3bet', 'facing3bet', oder 'isolate'
+let currentMode = 'or'; // 'rfi', '3bet', 'facing3bet', 'isolate' (cash) oder 'or' (tournament)
 let currentHand = null;
 let currentPosition = null;
 let currentOpenerPosition = null;
@@ -14,6 +14,15 @@ let currentLimperPosition = null; // Für isolate Modus
 let correctActionData = null; // { action: 'raise'|'call'|'fold'|'mixed', isMixed: bool, mixedData?: {...} }
 let score = { correct: 0, total: 0 };
 let activePositions = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+
+// Game Type: 'cash' oder 'tournament'
+let gameType = 'tournament';
+let currentStackSize = '10-20bb'; // Tournament Stack Kategorie
+let currentStackBB = 15; // Exakte Stacksize in BB (10-20)
+let currentOpenSize = 2.3; // Open-Sizing in BB (für vsopen Mode)
+let currentBlindsWeak = false; // Zufällig pro vsopen-Szenario: sind die Blinds weak?
+let activeTournamentPositions = ['UTG', 'UTG1', 'UTG2', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+let activeVillainPositions = ['UTG', 'MP', 'BTN', 'SB']; // Opener-Filter für vsopen Mode
 
 // EV Tracking
 let evGainTotal = 0;
@@ -33,7 +42,11 @@ let detailedStats = {
     rfi: {},       // key: "position|handType" -> { total, correct, evLost }
     '3bet': {},    // key: "position_vs_opener|handType" -> { total, correct, evLost }
     facing3bet: {},// key: "position_vs_3bettor|handType" -> { total, correct, evLost }
-    isolate: {}    // key: "position_vs_limper|handType" -> { total, correct, evLost }
+    isolate: {},   // key: "position_vs_limper|handType" -> { total, correct, evLost }
+    // Tournament modes
+    'or': {},      // key: "stacksize|position|handType" -> { total, correct, evLost }
+    'vs3bet': {}, // key: "stacksize|position|handType" -> { total, correct, evLost }
+    'vsopen': {}  // key: "stacksize|position_vs_opener|handType"
 };
 
 // Hand-Typ Kategorien für Leak-Erkennung
@@ -102,6 +115,15 @@ function getSpotKey() {
         return `${currentPosition}_vs_${current3BettorPosition}`;
     } else if (currentMode === 'isolate') {
         return `${currentPosition}_vs_${currentLimperPosition}`;
+    } else if (currentMode === 'or') {
+        // Tournament OR mode: include stacksize
+        return `${currentStackSize}|${currentPosition}`;
+    } else if (currentMode === 'vs3bet') {
+        // Tournament vs 3-Bet mode: include stacksize and 3bettor
+        return `${currentStackSize}|${currentPosition}_vs_${current3BettorPosition}`;
+    } else if (currentMode === 'vsopen') {
+        // Tournament vs Open mode: include stacksize and opener
+        return `${currentStackSize}|${currentPosition}_vs_${currentOpenerPosition}`;
     }
     return 'unknown';
 }
@@ -154,9 +176,12 @@ function loadFromLocalStorage() {
         evGainTotal = data.evGainTotal || 0;
         evLossTotal = data.evLossTotal || 0;
         mistakes = data.mistakes || [];
-        detailedStats = data.detailedStats || { rfi: {}, '3bet': {}, facing3bet: {}, isolate: {} };
-        // Sicherstellen, dass isolate existiert (für alte LocalStorage-Daten)
+        detailedStats = data.detailedStats || { rfi: {}, '3bet': {}, facing3bet: {}, isolate: {}, 'or': {}, 'vs3bet': {}, 'vsopen': {} };
+        // Sicherstellen, dass alle Modi existieren (für alte LocalStorage-Daten)
         if (!detailedStats.isolate) detailedStats.isolate = {};
+        if (!detailedStats.or) detailedStats.or = {};
+        if (!detailedStats.vs3bet) detailedStats.vs3bet = {};
+        if (!detailedStats.vsopen) detailedStats.vsopen = {};
 
         return true;
     } catch (e) {
@@ -174,7 +199,7 @@ function resetAllStats() {
     evGainTotal = 0;
     evLossTotal = 0;
     mistakes = [];
-    detailedStats = { rfi: {}, '3bet': {}, facing3bet: {}, isolate: {} };
+    detailedStats = { rfi: {}, '3bet': {}, facing3bet: {}, isolate: {}, 'or': {}, 'vs3bet': {}, 'vsopen': {} };
     focusModeActive = false;
 
     try {
@@ -203,7 +228,7 @@ function getWeaknesses(limit = 5) {
     const allWeaknesses = [];
 
     // Sammle Weaknesses aus allen Modi
-    for (const mode of ['rfi', '3bet', 'facing3bet', 'isolate']) {
+    for (const mode of ['rfi', '3bet', 'facing3bet', 'isolate', 'or']) {
         const modeStats = detailedStats[mode];
 
         for (const [key, stats] of Object.entries(modeStats)) {
@@ -249,7 +274,7 @@ function renderWeaknesses() {
         return;
     }
 
-    const modeNames = { rfi: 'RFI', '3bet': '3-Bet', facing3bet: 'vs 3-Bet', isolate: 'vs Limp' };
+    const modeNames = { rfi: 'RFI', '3bet': '3-Bet', facing3bet: 'vs 3-Bet', isolate: 'vs Limp', 'or': 'OR (MTT)' };
 
     weaknessesList.innerHTML = weaknesses.map(w => {
         const successPercent = Math.round(w.successRate * 100);
@@ -361,6 +386,14 @@ function generateFocusHand() {
         currentLimperPosition = parts[1] || 'UTG';
         currentOpenerPosition = null;
         current3BettorPosition = null;
+    } else if (selectedWeakness.mode === 'or') {
+        // Tournament OR mode: spot format is "stacksize|position"
+        const parts = selectedWeakness.spot.split('|');
+        currentStackSize = parts[0] || '10-20bb';
+        currentPosition = parts[1] || 'BTN';
+        currentOpenerPosition = null;
+        current3BettorPosition = null;
+        currentLimperPosition = null;
     }
 
     // Generiere Hand vom passenden Typ
@@ -424,27 +457,74 @@ function updateModeUI() {
     // Show/hide Call button (used as Limp in isolate mode)
     const callBtn = document.querySelector('.action-btn.call');
     const limpBtn = document.querySelector('.action-btn.limp');
+    const jamBtn = document.querySelector('.action-btn.jam');
 
-    if (currentMode === '3bet' || currentMode === 'facing3bet') {
-        if (callBtn) callBtn.style.display = 'inline-block';
-        if (limpBtn) limpBtn.style.display = 'none';
-    } else if (currentMode === 'isolate') {
-        if (callBtn) callBtn.style.display = 'none';
-        if (limpBtn) limpBtn.style.display = 'inline-block';
+    // Tournament mode: Buttons basierend auf Stacksize und Mode
+    if (gameType === 'tournament') {
+        if (currentMode === 'vsopen') {
+            // vs Open: Fold, Call, 3-Bet (raise), Jam
+            if (callBtn) callBtn.style.display = 'inline-block';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'inline-block';
+        } else if (currentMode === 'vs3bet') {
+            // vs 3-Bet: Fold, Call, 4-Bet
+            if (callBtn) callBtn.style.display = 'inline-block';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        } else if (currentStackSize === '10-20bb') {
+            // 10-20bb OR: Jam sichtbar, Limp nur für SB
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = (currentPosition === 'SB') ? 'inline-block' : 'none';
+            if (jamBtn) jamBtn.style.display = 'inline-block';
+        } else {
+            // 25bb, 100bb OR: Nur Fold + Raise (kein Jam/Limp)
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        }
     } else {
-        if (callBtn) callBtn.style.display = 'none';
-        if (limpBtn) limpBtn.style.display = 'none';
+        // Cash Game Modi
+        if (currentMode === '3bet' || currentMode === 'facing3bet') {
+            if (callBtn) callBtn.style.display = 'inline-block';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        } else if (currentMode === 'isolate') {
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = 'inline-block';
+            if (jamBtn) jamBtn.style.display = 'none';
+        } else {
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        }
     }
 
     // Update Raise button text
     const raiseBtn = document.querySelector('.action-btn.raise');
-    if (currentMode === 'facing3bet') {
+    if (currentMode === 'facing3bet' || currentMode === 'vs3bet') {
         raiseBtn.innerHTML = '4-Bet<span class="shortcut">R</span>';
     } else if (currentMode === 'isolate') {
         raiseBtn.innerHTML = 'Iso-Raise<span class="shortcut">R</span>';
+    } else if (currentMode === 'or') {
+        raiseBtn.innerHTML = 'Openraise<span class="shortcut">R</span>';
+    } else if (currentMode === 'vsopen') {
+        raiseBtn.innerHTML = '3-Bet<span class="shortcut">R</span>';
     } else {
         raiseBtn.innerHTML = 'Raise<span class="shortcut">R</span>';
     }
+
+    // Villain-Filter nur in vsopen Mode (Tournament) sichtbar
+    const villainGrid = document.getElementById('tournament-villain-grid');
+    const villainLabel = document.getElementById('villain-sub-label');
+    const heroLabel = document.getElementById('hero-sub-label');
+    const showVillain = (gameType === 'tournament' && currentMode === 'vsopen');
+    if (villainGrid) villainGrid.style.display = showVillain ? 'grid' : 'none';
+    if (villainLabel) villainLabel.style.display = showVillain ? 'block' : 'none';
+    if (heroLabel) heroLabel.style.display = showVillain ? 'block' : 'none';
+
+    // Verfügbarkeit der Hero/Villain-Checkboxes koppeln (vsopen Mode)
+    updateVillainAvailability();
+    updateHeroAvailability();
 }
 
 function renderScenarioText() {
@@ -465,6 +545,10 @@ const elements = {};
 function init() {
     // Cache DOM elements
     elements.cards = document.querySelector('.cards');
+    elements.heroCards = document.getElementById('hero-cards');
+    elements.seatsContainer = document.getElementById('seats-container');
+    elements.scenarioInfo = document.getElementById('scenario-info');
+    elements.potDisplay = document.getElementById('pot-display');
     elements.positionBadge = document.querySelector('.position-badge');
     elements.scenarioText = document.querySelector('.scenario-text');
     elements.feedback = document.querySelector('.feedback');
@@ -480,6 +564,8 @@ function init() {
     elements.callBtn = document.querySelector('.action-btn.call');
     elements.settingsPanel = document.querySelector('.settings-panel');
     elements.settingsToggle = document.querySelector('.settings-toggle button');
+    elements.cashPositionsGrid = document.getElementById('cash-positions-grid');
+    elements.tournamentPositionsGrid = document.getElementById('tournament-positions-grid');
     elements.evPer100 = document.getElementById('ev-per-100');
     elements.evRating = document.getElementById('ev-rating');
     elements.evGain = document.getElementById('ev-gain');
@@ -502,15 +588,86 @@ function init() {
 
     elements.nextBtn.addEventListener('click', nextHand);
 
-    elements.settingsToggle.addEventListener('click', toggleSettings);
+    // Settings toggle (optional - may not exist in new UI)
+    if (elements.settingsToggle) {
+        elements.settingsToggle.addEventListener('click', toggleSettings);
+    }
 
-    // Position filter listeners
-    document.querySelectorAll('.position-filter').forEach(checkbox => {
-        checkbox.addEventListener('change', updateActivePositions);
+    // Position filter listeners (Cash) - both sidebar and legacy
+    document.querySelectorAll('.cash-pos').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            // Sync sidebar with legacy checkboxes
+            syncPositionCheckboxes('cash', e.target.value, e.target.checked);
+            updateActivePositions();
+        });
+    });
+
+    // Position filter listeners (Tournament) - both sidebar and legacy
+    document.querySelectorAll('.tournament-pos').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            // Sync sidebar with legacy checkboxes
+            syncPositionCheckboxes('tournament', e.target.value, e.target.checked);
+            updateActiveTournamentPositions();
+            updateVillainAvailability();
+        });
+    });
+
+    // Villain position filter listeners (vsopen Mode)
+    document.querySelectorAll('.tournament-villain-pos').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            updateActiveVillainPositions();
+            updateHeroAvailability();
+        });
+    });
+
+    // Game Type Toggle listeners
+    document.querySelectorAll('.game-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => setGameType(btn.dataset.type));
+    });
+
+    // Stacksize Selector listeners (legacy)
+    document.querySelectorAll('.stacksize-btn').forEach(btn => {
+        btn.addEventListener('click', () => setStackSize(btn.dataset.stack));
+    });
+
+    // Sidebar Mode Selector listeners
+    document.querySelectorAll('.sidebar-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setMode(btn.dataset.mode);
+            // Update active state
+            document.querySelectorAll('.sidebar-mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // Sidebar Stacksize Selector listeners
+    document.querySelectorAll('.sidebar-stacksize-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setStackSize(btn.dataset.stack);
+            // Update active state
+            document.querySelectorAll('.sidebar-stacksize-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
     });
 
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboard);
+
+    // Sidebar Toggle
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const mainLayout = document.querySelector('.main-layout');
+    if (sidebarToggle && mainLayout) {
+        // Restore saved state
+        const savedHidden = localStorage.getItem('sidebar-hidden') === 'true';
+        if (savedHidden) mainLayout.classList.add('sidebar-hidden');
+
+        sidebarToggle.addEventListener('click', () => {
+            const hidden = mainLayout.classList.toggle('sidebar-hidden');
+            try {
+                localStorage.setItem('sidebar-hidden', hidden ? 'true' : 'false');
+            } catch (e) {}
+        });
+    }
 
     // Range viewer toggle
     elements.rangeModeToggle.addEventListener('change', (e) => {
@@ -535,35 +692,90 @@ function init() {
         renderWeaknesses();
     }
 
+    // Initialize game type UI (default is tournament)
+    updateModeButtons();
+    updateModeUI();
+    if (gameType === 'tournament') {
+        updateActiveTournamentPositions();
+        updateActiveVillainPositions();
+        // Show tournament position filters, hide cash (legacy)
+        document.getElementById('cash-positions').style.display = 'none';
+        document.getElementById('tournament-positions').style.display = 'flex';
+        // Show tournament position filters, hide cash (sidebar)
+        if (elements.cashPositionsGrid) elements.cashPositionsGrid.style.display = 'none';
+        if (elements.tournamentPositionsGrid) elements.tournamentPositionsGrid.style.display = 'grid';
+    } else {
+        // Show cash position filters, hide tournament (sidebar)
+        if (elements.cashPositionsGrid) elements.cashPositionsGrid.style.display = 'grid';
+        if (elements.tournamentPositionsGrid) elements.tournamentPositionsGrid.style.display = 'none';
+    }
+
     // Start
     nextHand();
 }
 
 function setMode(mode) {
     currentMode = mode;
+    elements.modeBtns = document.querySelectorAll('.mode-btn');
     elements.modeBtns.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
     });
 
-    // Show/hide Call and Limp buttons based on mode
+    // Show/hide Call, Limp and Jam buttons based on mode
     const limpBtn = document.querySelector('.action-btn.limp');
-    if (mode === '3bet' || mode === 'facing3bet') {
-        elements.callBtn.style.display = 'inline-block';
-        if (limpBtn) limpBtn.style.display = 'none';
-    } else if (mode === 'isolate') {
-        elements.callBtn.style.display = 'none';
-        if (limpBtn) limpBtn.style.display = 'inline-block';
+    const callBtn = document.querySelector('.action-btn.call');
+    const jamBtn = document.querySelector('.action-btn.jam');
+
+    // Tournament mode: Buttons basierend auf Stacksize und Mode
+    if (gameType === 'tournament') {
+        if (currentMode === 'vsopen') {
+            // vs Open: Fold, Call, 3-Bet (raise), Jam
+            if (callBtn) callBtn.style.display = 'inline-block';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'inline-block';
+        } else if (currentMode === 'vs3bet') {
+            // vs 3-Bet: Fold, Call, 4-Bet
+            if (callBtn) callBtn.style.display = 'inline-block';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        } else if (currentStackSize === '10-20bb') {
+            // 10-20bb OR: Jam sichtbar, Limp nur für SB
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = (currentPosition === 'SB') ? 'inline-block' : 'none';
+            if (jamBtn) jamBtn.style.display = 'inline-block';
+        } else {
+            // 25bb, 100bb OR: Nur Fold + Raise (kein Jam/Limp)
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        }
     } else {
-        elements.callBtn.style.display = 'none';
-        if (limpBtn) limpBtn.style.display = 'none';
+        // Cash Game Modi
+        if (mode === '3bet' || mode === 'facing3bet') {
+            if (callBtn) callBtn.style.display = 'inline-block';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        } else if (mode === 'isolate') {
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = 'inline-block';
+            if (jamBtn) jamBtn.style.display = 'none';
+        } else {
+            if (callBtn) callBtn.style.display = 'none';
+            if (limpBtn) limpBtn.style.display = 'none';
+            if (jamBtn) jamBtn.style.display = 'none';
+        }
     }
 
     // Update Raise button text based on mode
     const raiseBtn = document.querySelector('.action-btn.raise');
-    if (mode === 'facing3bet') {
+    if (mode === 'facing3bet' || mode === 'vs3bet') {
         raiseBtn.innerHTML = '4-Bet<span class="shortcut">R</span>';
     } else if (mode === 'isolate') {
         raiseBtn.innerHTML = 'Iso-Raise<span class="shortcut">R</span>';
+    } else if (mode === 'or') {
+        raiseBtn.innerHTML = 'Openraise<span class="shortcut">R</span>';
+    } else if (mode === 'vsopen') {
+        raiseBtn.innerHTML = '3-Bet<span class="shortcut">R</span>';
     } else {
         raiseBtn.innerHTML = 'Raise<span class="shortcut">R</span>';
     }
@@ -580,19 +792,345 @@ function setMode(mode) {
 }
 
 function toggleSettings() {
-    elements.settingsPanel.classList.toggle('show');
+    if (elements.settingsPanel) {
+        elements.settingsPanel.classList.toggle('show');
+    }
+}
+
+// Toggle collapsible sidebar sections
+function toggleSidebarSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.toggle('collapsed');
+    }
+}
+
+// Make function globally available
+window.toggleSidebarSection = toggleSidebarSection;
+
+// Toggle EV section
+function toggleEVSection() {
+    const section = document.getElementById('ev-section');
+    if (section) {
+        section.classList.toggle('collapsed');
+    }
+}
+window.toggleEVSection = toggleEVSection;
+
+function setGameType(type) {
+    gameType = type;
+
+    // Update UI
+    document.querySelectorAll('.game-type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+    });
+
+    // Update subtitle
+    const subtitle = document.getElementById('game-subtitle');
+    if (type === 'cash') {
+        subtitle.textContent = '6-Max No-Limit Hold\'em';
+    } else {
+        subtitle.textContent = 'Tournament Full-Ring (9-Max)';
+    }
+
+    // Show/hide stacksize selector (legacy)
+    const stacksizeSelector = document.getElementById('stacksize-selector');
+    if (stacksizeSelector) {
+        if (type === 'tournament') {
+            stacksizeSelector.style.display = 'inline-flex';
+        } else {
+            stacksizeSelector.style.display = 'none';
+        }
+    }
+
+    // Show/hide stacksize section (sidebar)
+    const stacksizeSection = document.getElementById('stacksize-section');
+    if (stacksizeSection) {
+        if (type === 'tournament') {
+            stacksizeSection.style.display = 'block';
+        } else {
+            stacksizeSection.style.display = 'none';
+        }
+    }
+
+    // Show/hide position filters (legacy)
+    const cashPositions = document.getElementById('cash-positions');
+    const tournamentPositions = document.getElementById('tournament-positions');
+    if (type === 'tournament') {
+        cashPositions.style.display = 'none';
+        tournamentPositions.style.display = 'flex';
+    } else {
+        cashPositions.style.display = 'flex';
+        tournamentPositions.style.display = 'none';
+    }
+
+    // Show/hide position filters (sidebar)
+    const cashPositionsGrid = document.getElementById('cash-positions-grid');
+    const tournamentPositionsGrid = document.getElementById('tournament-positions-grid');
+    if (cashPositionsGrid && tournamentPositionsGrid) {
+        if (type === 'tournament') {
+            cashPositionsGrid.style.display = 'none';
+            tournamentPositionsGrid.style.display = 'grid';
+        } else {
+            cashPositionsGrid.style.display = 'grid';
+            tournamentPositionsGrid.style.display = 'none';
+        }
+    }
+
+    // Update mode buttons
+    updateModeButtons();
+
+    // Set default mode for game type
+    if (type === 'tournament') {
+        currentMode = 'or';
+        updateActiveTournamentPositions();
+    } else {
+        currentMode = 'rfi';
+        updateActivePositions();
+    }
+
+    // Update action buttons (Jam visible in tournament mode)
+    updateModeUI();
+
+    // Reset scores for new game type
+    score = { correct: 0, total: 0 };
+    evGainTotal = 0;
+    evLossTotal = 0;
+    mistakes = [];
+    updateScoreDisplay();
+    updateEVDisplay();
+
+    nextHand();
+}
+
+function setStackSize(stack) {
+    currentStackSize = stack;
+
+    // Update UI
+    document.querySelectorAll('.stacksize-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.stack === stack);
+    });
+
+    // Setze Modus passend zu Stack (manche Modi sind nicht für alle Stacks verfügbar)
+    if (stack === '10-20bb' && (currentMode === 'vs3bet' || currentMode === 'vsopen')) {
+        currentMode = 'or';
+    } else if (stack === '20-30bb') {
+        // 20-30bb: OR + vsOpen. Keep current if valid, else default to vsopen
+        if (currentMode !== 'or' && currentMode !== 'vsopen') {
+            currentMode = 'vsopen';
+        }
+    } else if ((stack === '25bb' || stack === '100bb') && currentMode === 'vsopen') {
+        // vsOpen aktuell nur bei 20-30bb
+        currentMode = 'or';
+    }
+
+    // Update mode buttons (jetzt mit korrektem currentMode für active-State)
+    updateModeButtons();
+
+    // Update action buttons
+    updateModeUI();
+
+    // Reset scores
+    score = { correct: 0, total: 0 };
+    evGainTotal = 0;
+    evLossTotal = 0;
+    mistakes = [];
+    updateScoreDisplay();
+    updateEVDisplay();
+
+    nextHand();
+}
+
+function updateModeButtons() {
+    const modeSelector = document.querySelector('.mode-selector');
+    const sidebarModeSelector = document.getElementById('sidebar-mode-selector');
+
+    if (gameType === 'cash') {
+        // Cash Game Modi
+        if (modeSelector) {
+            modeSelector.innerHTML = `
+                <button class="mode-btn active" data-mode="rfi">RFI</button>
+                <button class="mode-btn" data-mode="3bet">3-Bet</button>
+                <button class="mode-btn" data-mode="facing3bet">vs 3-Bet</button>
+                <button class="mode-btn" data-mode="isolate">vs Limp</button>
+            `;
+        }
+        if (sidebarModeSelector) {
+            sidebarModeSelector.innerHTML = `
+                <button class="sidebar-mode-btn active" data-mode="rfi">RFI (Openraise)</button>
+                <button class="sidebar-mode-btn" data-mode="3bet">3-Bet</button>
+                <button class="sidebar-mode-btn" data-mode="facing3bet">vs 3-Bet</button>
+                <button class="sidebar-mode-btn" data-mode="isolate">vs Limp</button>
+            `;
+        }
+    } else {
+        // Tournament Modi
+        if (currentStackSize === '20-30bb') {
+            // 20-30bb: OR + vs Open (Flat/3-Bet vs Opener)
+            const orActive = currentMode === 'or' ? 'active' : '';
+            const vsopenActive = currentMode === 'vsopen' || currentMode !== 'or' ? 'active' : '';
+            if (modeSelector) {
+                modeSelector.innerHTML = `
+                    <button class="mode-btn ${orActive}" data-mode="or">OR</button>
+                    <button class="mode-btn ${vsopenActive}" data-mode="vsopen">vs Open</button>
+                `;
+            }
+            if (sidebarModeSelector) {
+                sidebarModeSelector.innerHTML = `
+                    <button class="sidebar-mode-btn ${orActive}" data-mode="or">OR (Openraise)</button>
+                    <button class="sidebar-mode-btn ${vsopenActive}" data-mode="vsopen">vs Open (Flat/3-Bet)</button>
+                `;
+            }
+        } else if (currentStackSize === '10-20bb') {
+            if (modeSelector) {
+                modeSelector.innerHTML = `
+                    <button class="mode-btn active" data-mode="or">OR</button>
+                `;
+            }
+            if (sidebarModeSelector) {
+                sidebarModeSelector.innerHTML = `
+                    <button class="sidebar-mode-btn active" data-mode="or">OR (Openraise)</button>
+                `;
+            }
+        } else {
+            // 25bb und 100bb: OR + vs 3-Bet
+            if (modeSelector) {
+                modeSelector.innerHTML = `
+                    <button class="mode-btn active" data-mode="or">OR</button>
+                    <button class="mode-btn" data-mode="vs3bet">vs 3-Bet</button>
+                `;
+            }
+            if (sidebarModeSelector) {
+                sidebarModeSelector.innerHTML = `
+                    <button class="sidebar-mode-btn active" data-mode="or">OR (Openraise)</button>
+                    <button class="sidebar-mode-btn" data-mode="vs3bet">vs 3-Bet</button>
+                `;
+            }
+        }
+    }
+
+    // Re-attach event listeners (legacy)
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => setMode(btn.dataset.mode));
+    });
+    elements.modeBtns = document.querySelectorAll('.mode-btn');
+
+    // Re-attach event listeners (sidebar)
+    document.querySelectorAll('.sidebar-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setMode(btn.dataset.mode);
+            document.querySelectorAll('.sidebar-mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+}
+
+function updateActiveTournamentPositions() {
+    activeTournamentPositions = [];
+    document.querySelectorAll('.tournament-pos:checked').forEach(checkbox => {
+        activeTournamentPositions.push(checkbox.value);
+    });
+
+    // Mindestens eine Position muss aktiv sein
+    if (activeTournamentPositions.length === 0) {
+        activeTournamentPositions = ['BTN'];
+        document.querySelector('.tournament-pos[value="BTN"]').checked = true;
+    }
+}
+
+function updateActiveVillainPositions() {
+    activeVillainPositions = [];
+    document.querySelectorAll('.tournament-villain-pos:checked').forEach(checkbox => {
+        activeVillainPositions.push(checkbox.value);
+    });
+
+    // Mindestens ein Villain muss aktiv sein
+    if (activeVillainPositions.length === 0) {
+        activeVillainPositions = ['UTG'];
+        const fallback = document.querySelector('.tournament-villain-pos[value="UTG"]');
+        if (fallback) fallback.checked = true;
+    }
+}
+
+// Graut Villain-Checkboxes aus, für die kein aktiver Hero einen Datensatz hat.
+// Disabled-State erhält den Checked-Zustand des Users, damit beim Re-Aktivieren
+// der vorige Filter wiederhergestellt ist.
+function updateVillainAvailability() {
+    const villainCheckboxes = document.querySelectorAll('.tournament-villain-pos');
+    if (!villainCheckboxes.length) return;
+
+    const inVsOpen = (gameType === 'tournament' && currentMode === 'vsopen');
+    if (!inVsOpen) {
+        villainCheckboxes.forEach(cb => { cb.disabled = false; });
+        return;
+    }
+
+    // vsopen läuft immer im 20-30bb Bracket – 25 als kanonischer Lookup
+    const validVillains = (typeof getValidVillainsForHeroes === 'function')
+        ? getValidVillainsForHeroes(activeTournamentPositions, 25)
+        : [];
+
+    villainCheckboxes.forEach(cb => {
+        cb.disabled = !validVillains.includes(cb.value);
+    });
+}
+
+// Symmetrisch: Graut Hero-Checkboxes aus, für die kein aktiver Villain einen Datensatz hat.
+// Nur in vsopen Mode aktiv – in anderen Modi werden alle Hero-Positionen genutzt.
+function updateHeroAvailability() {
+    const heroCheckboxes = document.querySelectorAll('.tournament-pos');
+    if (!heroCheckboxes.length) return;
+
+    const inVsOpen = (gameType === 'tournament' && currentMode === 'vsopen');
+    if (!inVsOpen) {
+        heroCheckboxes.forEach(cb => { cb.disabled = false; });
+        return;
+    }
+
+    const validHeroes = (typeof getValidHeroesForVillains === 'function')
+        ? getValidHeroesForVillains(activeVillainPositions, 25)
+        : [];
+
+    heroCheckboxes.forEach(cb => {
+        cb.disabled = !validHeroes.includes(cb.value);
+    });
+}
+
+// Sync sidebar and legacy position checkboxes
+function syncPositionCheckboxes(type, position, checked) {
+    const prefix = type === 'tournament' ? 'tpos' : 'pos';
+    const sidebarPrefix = type === 'tournament' ? 'sidebar-tpos' : 'sidebar-pos';
+
+    // Map position values to lowercase IDs
+    const posMap = {
+        'UTG': 'utg', 'UTG1': 'utg1', 'UTG2': 'utg2', 'MP': 'mp',
+        'HJ': 'hj', 'CO': 'co', 'BTN': 'btn', 'SB': 'sb', 'BB': 'bb'
+    };
+    const posId = posMap[position] || position.toLowerCase();
+
+    // Sync legacy checkbox
+    const legacyCheckbox = document.getElementById(`${prefix}-${posId}`);
+    if (legacyCheckbox && legacyCheckbox.checked !== checked) {
+        legacyCheckbox.checked = checked;
+    }
+
+    // Sync sidebar checkbox
+    const sidebarCheckbox = document.getElementById(`${sidebarPrefix}-${posId}`);
+    if (sidebarCheckbox && sidebarCheckbox.checked !== checked) {
+        sidebarCheckbox.checked = checked;
+    }
 }
 
 function updateActivePositions() {
     activePositions = [];
-    document.querySelectorAll('.position-filter:checked').forEach(checkbox => {
+    document.querySelectorAll('.cash-pos:checked').forEach(checkbox => {
         activePositions.push(checkbox.value);
     });
 
     // Mindestens eine Position muss aktiv sein
     if (activePositions.length === 0) {
         activePositions = ['BTN'];
-        document.querySelector('.position-filter[value="BTN"]').checked = true;
+        document.querySelector('.cash-pos[value="BTN"]').checked = true;
     }
 }
 
@@ -679,7 +1217,24 @@ function renderRangeViewer() {
     let isFourBetRange = false;
     let isIsoRange = false;
 
-    if (currentMode === 'rfi') {
+    if (currentMode === 'vs3bet') {
+        // Tournament vs 3-Bet mode
+        range = getTournamentVs3BetRange(currentStackSize, currentPosition);
+        rangeLabel = `vs 3-Bet: ${currentPosition} (${currentStackBB}bb)`;
+        isFourBetRange = true;
+    } else if (currentMode === 'vsopen') {
+        // Tournament vs Open mode
+        range = getTournamentFacingOpenRange(currentPosition, currentOpenerPosition, currentStackBB, currentOpenSize, currentBlindsWeak);
+        const sizeLabel = Number.isInteger(currentOpenSize) ? `${currentOpenSize}.0bb` : `${currentOpenSize}bb`;
+        const weakNote = currentBlindsWeak ? ', Blinds weak' : '';
+        rangeLabel = `vs ${currentOpenerPosition} Open (${sizeLabel}${weakNote}): ${currentPosition} (${currentStackBB}bb)`;
+    } else if (currentMode === 'or') {
+        // Tournament OR mode - spezielle Behandlung
+        range = getTournamentOpenRange(currentStackSize, currentPosition);
+        rangeLabel = `OR Range: ${currentPosition} (${currentStackBB}bb)`;
+        // Markiere als Tournament-Range für spezielle Darstellung
+        range._isTournamentOR = true;
+    } else if (currentMode === 'rfi') {
         range = RFI_RANGES[currentPosition];
         rangeLabel = `RFI Range: ${currentPosition}`;
     } else if (currentMode === 'facing3bet' && current3BettorPosition) {
@@ -706,7 +1261,7 @@ function renderRangeViewer() {
         const cellHand = cell.dataset.hand;
 
         // Remove old classes
-        cell.classList.remove('raise', 'call', 'fold', 'mixed', 'limp', 'current-hand',
+        cell.classList.remove('raise', 'call', 'fold', 'mixed', 'limp', 'jam', 'current-hand',
             'equity-90', 'equity-80', 'equity-70', 'equity-60', 'equity-50',
             'equity-40', 'equity-30', 'equity-20', 'equity-10');
         cell.style.background = ''; // Reset inline style for mixed
@@ -742,16 +1297,40 @@ function renderRangeViewer() {
                 }
 
                 if (!isMixed) {
-                    // Check for raise (3-bet mode) or fourbet (facing 3-bet mode)
-                    const raiseHands = isFourBetRange ? range.fourbet : range.raise;
-                    if (raiseHands && raiseHands.includes(cellHand)) {
-                        cell.classList.add('raise');
-                    } else if (range.call && range.call.includes(cellHand)) {
-                        cell.classList.add('call');
-                    } else if (isIsoRange && range.limp && range.limp.includes(cellHand)) {
-                        cell.classList.add('limp');
+                    // Tournament OR mode - spezielle Behandlung
+                    if (range._isTournamentOR) {
+                        // Bestimme korrekte Aktion basierend auf currentStackBB
+                        const action = getTournamentORAction(cellHand, currentPosition, currentStackBB, currentStackSize);
+                        if (action === 'openraise') {
+                            cell.classList.add('raise');
+                        } else if (action === 'jam') {
+                            cell.classList.add('jam');
+                        } else {
+                            cell.classList.add('fold');
+                        }
+                    } else if (range._isFacingOpen) {
+                        const action = getTournamentFacingOpenAction(cellHand, range.heroPosition, range.openerPosition, range.stackBB, range.openSizeBB, range.blindsWeak);
+                        if (action === 'jam') {
+                            cell.classList.add('jam');
+                        } else if (action === 'raise') {
+                            cell.classList.add('raise');
+                        } else if (action === 'call') {
+                            cell.classList.add('call');
+                        } else {
+                            cell.classList.add('fold');
+                        }
                     } else {
-                        cell.classList.add('fold');
+                        // Check for raise (3-bet mode) or fourbet (facing 3-bet mode)
+                        const raiseHands = isFourBetRange ? range.fourbet : range.raise;
+                        if (raiseHands && raiseHands.includes(cellHand)) {
+                            cell.classList.add('raise');
+                        } else if (range.call && range.call.includes(cellHand)) {
+                            cell.classList.add('call');
+                        } else if (isIsoRange && range.limp && range.limp.includes(cellHand)) {
+                            cell.classList.add('limp');
+                        } else {
+                            cell.classList.add('fold');
+                        }
                     }
                 }
             } else {
@@ -808,6 +1387,9 @@ function calculateEVGain(handNotation, correctAction) {
     if (correctAction === 'raise') {
         // Premium richtig geraised = Value generiert
         evGain = handValue;
+    } else if (correctAction === 'jam') {
+        // Richtig gejammt = Value generiert (etwas höher weil mehr Fold Equity)
+        evGain = Math.round(handValue * 1.1);
     } else if (correctAction === 'fold') {
         // Trash richtig gefoldet = Verlust vermieden
         evGain = 100 - handValue;
@@ -860,6 +1442,20 @@ function calculateEVLoss(handNotation, userAction, correctAction, position, open
     } else if (correctAction === 'fold' && userAction === 'limp') {
         // Fold zu Limp = Trash gelimpt
         evLoss = Math.round((100 - handValue) * 0.5);
+    }
+    // Jam-spezifische Fehler (für Tournament OR-Modus)
+    else if (correctAction === 'jam' && userAction === 'fold') {
+        // Jam-Hand gefoldet = großer Verlust
+        evLoss = Math.round(handValue * 0.9);
+    } else if (correctAction === 'jam' && userAction === 'raise') {
+        // Jam zu Raise = falsche Sizing, aber Hand richtig gespielt
+        evLoss = Math.round(handValue * 0.3);
+    } else if (correctAction === 'raise' && userAction === 'jam') {
+        // Raise zu Jam = zu aggressiv, ICM-Fehler
+        evLoss = Math.round((100 - handValue) * 0.4);
+    } else if (correctAction === 'fold' && userAction === 'jam') {
+        // Fold zu Jam = großer Fehler
+        evLoss = 100 - handValue;
     }
 
     evLoss = Math.max(5, evLoss); // Minimum 5 EV-Loss pro Fehler
@@ -923,7 +1519,7 @@ function updateEVDisplay() {
     elements.evLoss.textContent = '-' + evLossTotal;
 
     // Fehler-Liste aktualisieren
-    const actionNames = { fold: 'Fold', call: 'Call', raise: 'Raise', limp: 'Limp' };
+    const actionNames = { fold: 'Fold', call: 'Call', raise: 'Raise', limp: 'Limp', jam: 'Jam' };
 
     if (mistakes.length === 0) {
         elements.mistakesList.innerHTML = '<li class="no-mistakes">Noch keine Fehler!</li>';
@@ -942,8 +1538,44 @@ function updateEVDisplay() {
     }
 }
 
-function determineCorrectAction(handNotation, position, mode, openerPosition = null, threeBettorPosition = null, limperPosition = null) {
+function determineCorrectAction(handNotation, position, mode, openerPosition = null, threeBettorPosition = null, limperPosition = null, stackSize = null) {
     let range = null;
+
+    // Tournament OR Mode
+    if (mode === 'or') {
+        // Benutze getTournamentORAction für Stacksize-abhängige Entscheidung
+        const action = getTournamentORAction(handNotation, position, currentStackBB, currentStackSize);
+
+        if (action === 'openraise') {
+            return { action: 'raise', isMixed: false };
+        } else if (action === 'jam') {
+            return { action: 'jam', isMixed: false };
+        } else if (action === 'limp') {
+            return { action: 'limp', isMixed: false };
+        }
+        return { action: 'fold', isMixed: false };
+    }
+
+    // Tournament vs 3-Bet Mode (als Opener auf 3-Bet reagieren)
+    if (mode === 'vs3bet') {
+        const action = getTournamentVs3BetAction(handNotation, position, currentStackBB, currentStackSize);
+
+        if (action === '4bet') {
+            return { action: 'raise', isMixed: false }; // 4-bet wird als 'raise' behandelt
+        } else if (action === 'call') {
+            return { action: 'call', isMixed: false };
+        }
+        return { action: 'fold', isMixed: false };
+    }
+
+    // Tournament vs Open Mode (Hero reagiert auf Open einer früheren Position)
+    if (mode === 'vsopen') {
+        const action = getTournamentFacingOpenAction(handNotation, position, currentOpenerPosition, currentStackBB, currentOpenSize, currentBlindsWeak);
+        if (action === 'jam') return { action: 'jam', isMixed: false };
+        if (action === 'raise') return { action: 'raise', isMixed: false }; // 3-Bet
+        if (action === 'call') return { action: 'call', isMixed: false };
+        return { action: 'fold', isMixed: false };
+    }
 
     if (mode === 'rfi') {
         range = RFI_RANGES[position];
@@ -1078,6 +1710,156 @@ function nextHand() {
     currentHand = generateHand();
     const handNotation = handToNotation(currentHand);
 
+    // Tournament OR Mode
+    if (currentMode === 'or') {
+        // OR: Wähle Tournament Position (außer BB, und SB nur bei 10-20bb)
+        let orPositions = activeTournamentPositions.filter(p => p !== 'BB');
+        if (currentStackSize === '25bb' || currentStackSize === '100bb' || currentStackSize === '20-30bb') {
+            orPositions = orPositions.filter(p => p !== 'SB');
+        }
+        if (orPositions.length === 0) {
+            currentPosition = 'BTN'; // Fallback
+        } else {
+            currentPosition = orPositions[Math.floor(Math.random() * orPositions.length)];
+        }
+        currentOpenerPosition = null;
+        current3BettorPosition = null;
+        currentLimperPosition = null;
+
+        // Generiere Stacksize basierend auf gewählter Kategorie
+        if (currentStackSize === '10-20bb') {
+            currentStackBB = Math.floor(Math.random() * 11) + 10; // 10-20
+        } else if (currentStackSize === '20-30bb') {
+            currentStackBB = Math.floor(Math.random() * 11) + 20; // 20-30
+        } else if (currentStackSize === '25bb') {
+            currentStackBB = 25;
+        } else if (currentStackSize === '100bb') {
+            currentStackBB = Math.floor(Math.random() * 61) + 40; // 40-100
+        }
+
+        correctActionData = determineCorrectAction(handNotation, currentPosition, 'or', null, null, null, currentStackSize);
+
+        elements.scenarioText.innerHTML = `<strong>${currentStackBB}bb</strong> Stack - Alle vor dir haben <strong>gefoldet</strong>.<br>Was machst du?`;
+
+        // Update UI (inkl. Limp-Button für SB)
+        updateModeUI();
+        renderCards();
+        elements.positionBadge.textContent = `Du bist ${currentPosition}`;
+        return;
+    }
+
+    // Tournament vs 3-Bet Mode
+    if (currentMode === 'vs3bet') {
+        // Wähle Opener-Position (wir sind der Opener)
+        // Nur Positionen die OR-Ranges haben und von denen aus 3-bet werden kann
+        const openerPositions = activeTournamentPositions.filter(p => p !== 'BB' && p !== 'SB');
+        if (openerPositions.length === 0) {
+            currentPosition = 'BTN'; // Fallback
+        } else {
+            currentPosition = openerPositions[Math.floor(Math.random() * openerPositions.length)];
+        }
+
+        // 3-Bettor ist immer eine Position hinter uns (vereinfacht: BB oder SB)
+        const positionOrder = ['UTG', 'UTG1', 'UTG2', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+        const openerIndex = positionOrder.indexOf(currentPosition);
+        const possibleThreeBettors = positionOrder.slice(openerIndex + 1);
+        current3BettorPosition = possibleThreeBettors[Math.floor(Math.random() * possibleThreeBettors.length)] || 'BB';
+
+        currentOpenerPosition = null; // Wir sind selbst der Opener
+        currentLimperPosition = null;
+
+        // Generiere Stack (für 100bb: variabel 40-100, für 25bb: fix 25)
+        if (currentStackSize === '100bb') {
+            currentStackBB = Math.floor(Math.random() * 61) + 40; // 40-100
+        } else {
+            currentStackBB = 25;
+        }
+
+        // Wähle nur Hände die in der OR-Range sind (wir haben ja geöffnet)
+        const orRange = OR_RANGES[currentStackSize] ? OR_RANGES[currentStackSize][currentPosition] : null;
+
+        // Generiere immer erst eine Hand als Fallback
+        currentHand = generateHand();
+
+        if (orRange && orRange.openraise && orRange.openraise.length > 0) {
+            // Versuche eine Hand aus der OR-Range zu generieren
+            let attempts = 0;
+            while (attempts < 50) {
+                currentHand = generateHand();
+                const notation = handToNotation(currentHand);
+                if (orRange.openraise.includes(notation)) {
+                    break;
+                }
+                attempts++;
+            }
+        }
+
+        const handNotationVs3bet = handToNotation(currentHand);
+        correctActionData = determineCorrectAction(handNotationVs3bet, currentPosition, 'vs3bet', null, current3BettorPosition, null, currentStackSize);
+
+        elements.scenarioText.innerHTML = `<strong>${currentStackBB}bb</strong> Stack - Du hast aus <strong>${currentPosition}</strong> geraised.<br><strong>${current3BettorPosition}</strong> 3-bettet. Was machst du?`;
+
+        // Update UI
+        updateModeUI();
+        renderCards();
+        elements.positionBadge.textContent = `Du bist ${currentPosition}`;
+        return;
+    }
+
+    // Tournament vs Open Mode
+    if (currentMode === 'vsopen') {
+        // Stack zufällig 20-30bb
+        currentStackBB = Math.floor(Math.random() * 11) + 20; // 20-30
+
+        // Verfügbare Opener bei diesem Bracket, gefiltert nach User-Auswahl (Villain)
+        const allOpeners = getAvailableFacingOpenOpeners(currentStackBB);
+        if (allOpeners.length === 0) {
+            elements.scenarioText.innerHTML = `Keine Daten für ${currentStackBB}bb verfügbar.`;
+            renderCards();
+            return;
+        }
+        // Villain-Filter: Schnitt aus User-Auswahl UND verfügbaren Daten für aktive Heroes
+        const villainsForActiveHeroes = (typeof getValidVillainsForHeroes === 'function')
+            ? getValidVillainsForHeroes(activeTournamentPositions, currentStackBB)
+            : allOpeners;
+        const filteredOpeners = allOpeners
+            .filter(p => activeVillainPositions.includes(p))
+            .filter(p => villainsForActiveHeroes.includes(p));
+        // Fallback-Kaskade: User-Filter → nur Hero-passend → alles
+        const openerPool = filteredOpeners.length > 0
+            ? filteredOpeners
+            : (villainsForActiveHeroes.length > 0 ? villainsForActiveHeroes : allOpeners);
+        currentOpenerPosition = openerPool[Math.floor(Math.random() * openerPool.length)];
+
+        // Verfügbare Hero-Positionen vs diesen Opener
+        const heroCandidates = getAvailableFacingOpenHeroPositions(currentOpenerPosition, currentStackBB);
+        // Schnitt mit activeTournamentPositions (Hero-Filter)
+        const filteredHeroes = heroCandidates.filter(p => activeTournamentPositions.includes(p));
+        const heroPool = filteredHeroes.length > 0 ? filteredHeroes : heroCandidates;
+        currentPosition = heroPool[Math.floor(Math.random() * heroPool.length)];
+
+        // Variables Open-Sizing: 2.0 (minraise), 2.2 (small), 2.3 (standard), 2.5 (large)
+        const sizingPool = [2.0, 2.2, 2.3, 2.5];
+        currentOpenSize = sizingPool[Math.floor(Math.random() * sizingPool.length)];
+
+        // Random ob die Blinds weak sind (50/50) — aktiviert flat_soft_table Hände
+        currentBlindsWeak = Math.random() < 0.5;
+
+        current3BettorPosition = null;
+        currentLimperPosition = null;
+
+        const handNotationVsOpen = handToNotation(currentHand);
+        correctActionData = determineCorrectAction(handNotationVsOpen, currentPosition, 'vsopen', currentOpenerPosition, null, null, currentStackSize);
+
+        const sizeLabel = Number.isInteger(currentOpenSize) ? `${currentOpenSize}.0bb` : `${currentOpenSize}bb`;
+        elements.scenarioText.innerHTML = `<strong>${currentStackBB}bb</strong> Stack - <strong>${currentOpenerPosition}</strong> raised auf <strong>${sizeLabel}</strong>.<br>Du bist <strong>${currentPosition}</strong>. Was machst du?`;
+
+        updateModeUI();
+        renderCards();
+        elements.positionBadge.textContent = `Du bist ${currentPosition}`;
+        return;
+    }
+
     if (currentMode === 'rfi') {
         // RFI: Wähle Position (außer BB - dort gibt es kein RFI)
         const rfiPositions = activePositions.filter(p => p !== 'BB');
@@ -1169,10 +1951,244 @@ function renderCards() {
         <div class="card ${SUIT_NAMES[card.suit]}">
             <span class="rank">${card.rank}</span>
             <span class="suit">${SUIT_SYMBOLS[card.suit]}</span>
+            <span class="center-rank">${card.rank}</span>
         </div>
     `).join('');
 
-    elements.cards.innerHTML = html;
+    // Render to both old and new containers for compatibility
+    if (elements.cards) elements.cards.innerHTML = html;
+    if (elements.heroCards) elements.heroCards.innerHTML = html;
+
+    // Render the poker table
+    renderPokerTable();
+}
+
+// Poker Table Rendering
+function getTablePositions() {
+    if (gameType === 'tournament') {
+        return ['UTG', 'UTG1', 'UTG2', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+    } else {
+        return ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+    }
+}
+
+function getSeatPosition(index, totalSeats) {
+    // Distribute seats evenly around ellipse
+    // Start at bottom (hero), go clockwise
+    const angle = (Math.PI / 2) + (index / totalSeats) * 2 * Math.PI;
+
+    // Table felt is inset 10%, so it spans from 10% to 90% (80% total)
+    // Center is at 50%, radii should place seats just outside the felt
+    const radiusX = 44;
+    const radiusY = 44; // Slightly larger to push top positions up
+
+    const x = 50 + radiusX * Math.cos(angle);
+    const y = 50 + radiusY * Math.sin(angle);
+
+    return { x, y };
+}
+
+function getPotSize() {
+    const SB = 0.5;
+    const BB = 1;
+    const OPEN_SIZE = 2.3;
+    const THREEBET_SIZE_DEEP = 7.5;   // 100bb context
+    const THREEBET_SIZE_SHALLOW = 5.5; // 25bb context
+
+    if (currentMode === 'or' || currentMode === 'rfi') {
+        return SB + BB; // 1.5bb
+    }
+    if (currentMode === '3bet') {
+        // Cash: opener raised (Hero entscheidet vs Open)
+        return SB + BB + OPEN_SIZE;
+    }
+    if (currentMode === 'vsopen') {
+        // Tournament: Hero faced Open (variables Sizing)
+        return SB + BB + currentOpenSize;
+    }
+    if (currentMode === 'isolate') {
+        // Limper limped (1bb)
+        return SB + BB + BB;
+    }
+    if (currentMode === 'vs3bet' || currentMode === 'facing3bet') {
+        // Hero opened, 3-bettor 3-bettet — Size abhängig von Position
+        const isOOP = current3BettorPosition === 'SB' || current3BettorPosition === 'BB';
+        const threebetSize = isOOP ? 8.5 : 6.5;
+        return SB + BB + OPEN_SIZE + threebetSize;
+    }
+    return SB + BB;
+}
+
+function formatPot(potBB) {
+    // Nice Zahl Anzeige
+    return potBB % 1 === 0 ? `${potBB}bb` : `${potBB.toFixed(1)}bb`;
+}
+
+function renderPokerTable() {
+    if (!elements.seatsContainer) return;
+
+    if (elements.potDisplay) {
+        elements.potDisplay.textContent = `Pot: ${formatPot(getPotSize())}`;
+    }
+
+    const allPositions = getTablePositions();
+    const heroIndex = allPositions.indexOf(currentPosition);
+
+    if (heroIndex === -1) return;
+
+    // Rotate positions so hero is at index 0 (bottom of table)
+    const rotatedPositions = [
+        ...allPositions.slice(heroIndex),
+        ...allPositions.slice(0, heroIndex)
+    ];
+
+    const totalSeats = rotatedPositions.length;
+    let seatsHtml = '';
+    let blindChipsHtml = '';
+    let dealerBtnHtml = '';
+
+    rotatedPositions.forEach((pos, idx) => {
+        const { x, y } = getSeatPosition(idx, totalSeats);
+        const isHero = pos === currentPosition;
+        const isFolded = getPositionAction(pos) === 'fold';
+        const isBTN = pos === 'BTN';
+
+        const action = getPositionAction(pos);
+        const actionText = getActionDisplayText(pos, action);
+
+        // Text above circle for top half, below for bottom half
+        const isTopHalf = y < 45;
+
+        const classes = ['seat'];
+        if (isHero) classes.push('hero');
+        if (isFolded) classes.push('folded');
+        if (isTopHalf) classes.push('top-half');
+
+        // "weak" Marker: nur in vsopen Mode bei SB/BB wenn Blinds als weak markiert sind
+        const showWeak = (currentMode === 'vsopen' && currentBlindsWeak && (pos === 'SB' || pos === 'BB'));
+        const weakHtml = showWeak ? '<div class="seat-weak">weak</div>' : '';
+
+        seatsHtml += `
+            <div class="${classes.join(' ')}" style="left: ${x}%; top: ${y}%;">
+                <div class="seat-label top">${isTopHalf ? pos : ''}</div>
+                <div class="seat-stack">${currentStackBB}</div>
+                <div class="seat-label bottom">${!isTopHalf ? pos : ''}</div>
+                ${weakHtml}
+                ${actionText ? `<div class="seat-action">${actionText}</div>` : ''}
+            </div>
+        `;
+
+        // Alle Chips/Buttons gleichmäßig auf dem Tisch (0.3 Richtung Mitte)
+        const CHIP_MULTIPLIER = 0.3;
+
+        // Dealer button - immer auf dem Tisch neben BTN
+        if (isBTN) {
+            const btnX = x + (50 - x) * CHIP_MULTIPLIER;
+            const btnY = y + (50 - y) * CHIP_MULTIPLIER;
+            dealerBtnHtml = `<div class="dealer-btn" style="left: ${btnX}%; top: ${btnY}%;">D</div>`;
+        }
+
+        // Blind chips - aber nicht wenn dieser Spieler bereits geraised/3-bettet hat
+        // (dann ist der Blind in der Raise-Size schon drin)
+        const blindAlreadyCommitted = action === 'raise' || action === '3bet';
+        if (pos === 'SB' && !isFolded && !blindAlreadyCommitted) {
+            const chipX = x + (50 - x) * CHIP_MULTIPLIER;
+            const chipY = y + (50 - y) * CHIP_MULTIPLIER;
+            blindChipsHtml += `<div class="blind-chip sb" style="left: ${chipX}%; top: ${chipY}%;">0.5bb</div>`;
+        }
+        if (pos === 'BB' && !isFolded && !blindAlreadyCommitted) {
+            const chipX = x + (50 - x) * CHIP_MULTIPLIER;
+            const chipY = y + (50 - y) * CHIP_MULTIPLIER;
+            blindChipsHtml += `<div class="blind-chip bb" style="left: ${chipX}%; top: ${chipY}%;">1bb</div>`;
+        }
+
+        // Raise chip für Opener (in vs Open / 3bet / Iso Modi)
+        if (action === 'raise' && !isHero) {
+            const chipX = x + (50 - x) * CHIP_MULTIPLIER;
+            const chipY = y + (50 - y) * CHIP_MULTIPLIER;
+            // In vsopen Mode aktuelles Sizing zeigen, sonst Standard 2.3bb
+            const raiseSize = (currentMode === 'vsopen')
+                ? (Number.isInteger(currentOpenSize) ? `${currentOpenSize}.0bb` : `${currentOpenSize}bb`)
+                : '2.3bb';
+            blindChipsHtml += `<div class="raise-chip" style="left: ${chipX}%; top: ${chipY}%;">${raiseSize}</div>`;
+        }
+
+        // 3-Bet chip (vs3bet / facing3bet Modi): OOP = 8.5bb (Blinds), IP = 6.5bb
+        if (action === '3bet' && !isHero) {
+            const isOOP = pos === 'SB' || pos === 'BB';
+            const threebetSize = isOOP ? '8.5bb' : '6.5bb';
+            const chipX = x + (50 - x) * CHIP_MULTIPLIER;
+            const chipY = y + (50 - y) * CHIP_MULTIPLIER;
+            blindChipsHtml += `<div class="raise-chip threebet" style="left: ${chipX}%; top: ${chipY}%;">${threebetSize}</div>`;
+        }
+    });
+
+    elements.seatsContainer.innerHTML = seatsHtml + dealerBtnHtml + blindChipsHtml;
+}
+
+function getPositionAction(position) {
+    // Determine what action this position has taken based on mode and scenario
+    if (position === currentPosition) {
+        return 'hero'; // Hero hasn't acted yet
+    }
+
+    const allPositions = getTablePositions();
+    const heroIdx = allPositions.indexOf(currentPosition);
+    const posIdx = allPositions.indexOf(position);
+
+    if (currentMode === 'or' || currentMode === 'rfi') {
+        // OR/RFI mode: everyone before hero has folded
+        if (posIdx < heroIdx) {
+            return 'fold';
+        }
+        // Blinds haven't acted yet
+        return position === 'SB' || position === 'BB' ? 'blind' : null;
+    }
+
+    if (currentMode === 'vs3bet') {
+        // vs 3bet: Hero opened, someone 3bet
+        if (position === current3BettorPosition) {
+            return '3bet';
+        }
+        if (posIdx < heroIdx && position !== current3BettorPosition) {
+            return 'fold';
+        }
+        return null;
+    }
+
+    if (currentMode === '3bet' || currentMode === 'vsopen') {
+        // 3bet/vsopen mode: opener raised, others folded
+        if (position === currentOpenerPosition) {
+            return 'raise';
+        }
+        if (posIdx < heroIdx && position !== currentOpenerPosition) {
+            return 'fold';
+        }
+        return null;
+    }
+
+    if (currentMode === 'isolate') {
+        // Iso mode: limper limped
+        if (position === currentLimperPosition) {
+            return 'limp';
+        }
+        if (posIdx < heroIdx && position !== currentLimperPosition) {
+            return 'fold';
+        }
+        return null;
+    }
+
+    return null;
+}
+
+function getActionDisplayText(position, action) {
+    if (action === 'hero') return null;
+    if (action === 'fold') return 'Fold';
+    if (action === 'raise') return 'Raise';
+    if (action === '3bet') return '3-Bet';
+    if (action === 'limp') return 'Limp';
+    if (action === 'blind') return null; // Blinds shown as chips, not text
+    return null;
 }
 
 function handleAction(action) {
@@ -1240,17 +2256,22 @@ function showFeedback(isCorrect, userAction, isMixedAcceptable = false, mixedFre
     elements.feedback.classList.add('show', isCorrect ? 'correct' : 'wrong');
 
     const handNotation = handToNotation(currentHand);
-    const isFourBetMode = currentMode === 'facing3bet';
+    const isFourBetMode = currentMode === 'facing3bet' || currentMode === 'vs3bet';
     const isIsoMode = currentMode === 'isolate';
+    const isORMode = currentMode === 'or';
+    const isVsOpenMode = currentMode === 'vsopen';
 
     let raiseLabel = 'Raise';
     if (isFourBetMode) raiseLabel = '4-Bet';
     else if (isIsoMode) raiseLabel = 'Iso-Raise';
+    else if (isORMode) raiseLabel = 'Open';
+    else if (isVsOpenMode) raiseLabel = '3-Bet';
 
     const actionNames = {
         fold: 'Fold',
         call: 'Call',
         limp: 'Limp',
+        jam: isVsOpenMode ? '3-Bet Jam' : 'Openjam',
         raise: raiseLabel,
         mixed: 'Mixed'
     };
@@ -1292,6 +2313,10 @@ function showFeedback(isCorrect, userAction, isMixedAcceptable = false, mixedFre
             scenarioInfo = ` (${currentPosition} vs ${current3BettorPosition} 3-Bet)`;
         } else if (currentMode === 'isolate') {
             scenarioInfo = ` (vs ${currentLimperPosition} Limp)`;
+        } else if (currentMode === 'or') {
+            scenarioInfo = ` (${currentPosition}, ${currentStackBB}bb)`;
+        } else if (currentMode === 'vsopen') {
+            scenarioInfo = ` (${currentPosition} vs ${currentOpenerPosition}, ${currentStackBB}bb)`;
         }
 
         elements.correctAnswer.innerHTML = `
@@ -1343,10 +2368,15 @@ function handleKeyboard(e) {
             break;
         case 'c':
         case '2':
-            if (currentMode === '3bet' || currentMode === 'facing3bet') handleAction('call');
+            if (currentMode === '3bet' || currentMode === 'facing3bet' || currentMode === 'vs3bet' || currentMode === 'vsopen') handleAction('call');
             break;
         case 'l':
             if (currentMode === 'isolate') handleAction('limp');
+            // SB kann limpen im Tournament OR Mode
+            if (currentMode === 'or' && currentPosition === 'SB') handleAction('limp');
+            break;
+        case 'j':
+            if (currentMode === 'or' || currentMode === 'vsopen') handleAction('jam');
             break;
         case 'r':
         case '3':
