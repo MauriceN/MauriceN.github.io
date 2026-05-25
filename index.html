@@ -4,217 +4,411 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poker Preflop Trainer</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=4">
+    <style>
+        /* INLINE — garantiert Scroll, unabhängig vom Cache */
+        .main-layout {
+            display: flex !important;
+            flex-direction: row !important;
+            flex: 1 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+        }
+        aside.sidebar {
+            width: 280px !important;
+            flex-shrink: 0 !important;
+            height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            min-height: 0 !important;
+        }
+        /* WICHTIGER FIX: Sections behalten natürliche Höhe, kein grow/shrink */
+        aside.sidebar > .sidebar-section,
+        aside.sidebar > .sidebar-section.range-viewer {
+            flex: 0 0 auto !important;
+        }
+        aside.sidebar::-webkit-scrollbar {
+            width: 10px !important;
+            -webkit-appearance: none !important;
+            background: #2a323c !important;
+        }
+        aside.sidebar::-webkit-scrollbar-thumb {
+            background: #58a6ff !important;
+            border-radius: 6px !important;
+            min-height: 30px !important;
+        }
+
+        /* Sidebar Toggle */
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-toggle {
+            background: transparent;
+            border: 1px solid var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            line-height: 1;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-toggle:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        .main-layout.sidebar-hidden > aside.sidebar {
+            display: none !important;
+        }
+        /* Wenn Sidebar versteckt: main-content begrenzen und zentrieren */
+        .main-layout.sidebar-hidden > .main-content {
+            max-width: 900px !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+        }
+    </style>
 </head>
 <body>
-    <nav class="main-nav">
-    <a href="index.html" class="nav-item active">Preflop</a>
-    <a href="postflop.html" class="nav-item">Postflop</a>
-</nav>
+    <div class="app-wrapper">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="logo-row">
+                <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Sidebar ein/ausklappen" title="Sidebar ein/ausklappen">&#9776;</button>
+                <div class="logo">Preflop<span>Trainer</span></div>
+            </div>
 
-<div class="app-header">
-    <h1>Preflop Trainer</h1>
-    <p class="subtitle">6-Max No-Limit Hold'em</p>
-</div>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-item active">Preflop</a>
+                <a href="postflop.html" class="nav-item">Postflop</a>
+            </nav>
 
-<div class="app-layout">
-    <!-- Left Sidebar - Range Viewer -->
-    <div class="left-sidebar">
-        <div class="range-viewer">
-            <div class="range-header">
-                <h3>Range Viewer</h3>
-                <div class="range-toggle">
-                    <span class="toggle-label">Aktion</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="range-mode-toggle">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Equity</span>
-                </div>
+            <div class="game-type-toggle">
+                <button class="game-type-btn" data-type="cash">Cash</button>
+                <button class="game-type-btn active" data-type="tournament">Tournament</button>
             </div>
-            <div class="range-info" id="range-info">-</div>
-            <div class="range-grid-container">
-                <div class="range-grid" id="range-grid">
-                    <!-- Grid wird via JS generiert -->
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Mode Section -->
+                <div class="sidebar-section" id="mode-section">
+                    <div class="sidebar-section-header" onclick="toggleSidebarSection('mode-section')">
+                        <h3>Modus</h3>
+                        <span class="chevron">&#9660;</span>
+                    </div>
+                    <div class="sidebar-section-content">
+                        <div class="sidebar-mode-selector" id="sidebar-mode-selector">
+                            <button class="sidebar-mode-btn active" data-mode="or">OR (Openraise)</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="range-spoiler" id="range-spoiler">
-                    <span>Nach Antwort sichtbar</span>
+
+                <!-- Stacksize Section (Tournament only) -->
+                <div class="sidebar-section" id="stacksize-section">
+                    <div class="sidebar-section-header" onclick="toggleSidebarSection('stacksize-section')">
+                        <h3>Stacksize</h3>
+                        <span class="chevron">&#9660;</span>
+                    </div>
+                    <div class="sidebar-section-content">
+                        <div class="sidebar-stacksize-selector" id="sidebar-stacksize-selector">
+                            <button class="sidebar-stacksize-btn active" data-stack="10-20bb">10-20bb</button>
+                            <button class="sidebar-stacksize-btn" data-stack="20-30bb">20-30bb</button>
+                            <button class="sidebar-stacksize-btn" data-stack="25bb">25bb</button>
+                            <button class="sidebar-stacksize-btn" data-stack="100bb">40-100bb</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="range-legend" id="range-legend">
-                <span class="legend-item raise">Raise</span>
-                <span class="legend-item call">Call</span>
-                <span class="legend-item limp">Limp</span>
-                <span class="legend-item mixed">Mixed</span>
-                <span class="legend-item fold">Fold</span>
-            </div>
+
+                <!-- Positions Section -->
+                <div class="sidebar-section" id="positions-section">
+                    <div class="sidebar-section-header" onclick="toggleSidebarSection('positions-section')">
+                        <h3>Positionen</h3>
+                        <span class="chevron">&#9660;</span>
+                    </div>
+                    <div class="sidebar-section-content">
+                        <!-- Cash Game Positions -->
+                        <div class="position-grid cash-positions" id="cash-positions-grid" style="display: none;">
+                        <input type="checkbox" class="position-checkbox cash-pos" id="sidebar-pos-utg" value="UTG" checked>
+                        <label class="position-label" for="sidebar-pos-utg">UTG</label>
+
+                        <input type="checkbox" class="position-checkbox cash-pos" id="sidebar-pos-hj" value="HJ" checked>
+                        <label class="position-label" for="sidebar-pos-hj">HJ</label>
+
+                        <input type="checkbox" class="position-checkbox cash-pos" id="sidebar-pos-co" value="CO" checked>
+                        <label class="position-label" for="sidebar-pos-co">CO</label>
+
+                        <input type="checkbox" class="position-checkbox cash-pos" id="sidebar-pos-btn" value="BTN" checked>
+                        <label class="position-label" for="sidebar-pos-btn">BTN</label>
+
+                        <input type="checkbox" class="position-checkbox cash-pos" id="sidebar-pos-sb" value="SB" checked>
+                        <label class="position-label" for="sidebar-pos-sb">SB</label>
+
+                        <input type="checkbox" class="position-checkbox cash-pos" id="sidebar-pos-bb" value="BB" checked>
+                        <label class="position-label" for="sidebar-pos-bb">BB</label>
+                    </div>
+
+                    <!-- Tournament Positions (Hero) -->
+                    <div class="position-sub-label" id="hero-sub-label" style="display: none;">Hero</div>
+                    <div class="position-grid tournament-positions" id="tournament-positions-grid">
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-utg" value="UTG" checked>
+                        <label class="position-label" for="sidebar-tpos-utg">UTG</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-utg1" value="UTG1" checked>
+                        <label class="position-label" for="sidebar-tpos-utg1">UTG+1</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-utg2" value="UTG2" checked>
+                        <label class="position-label" for="sidebar-tpos-utg2">UTG+2</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-mp" value="MP" checked>
+                        <label class="position-label" for="sidebar-tpos-mp">MP</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-hj" value="HJ" checked>
+                        <label class="position-label" for="sidebar-tpos-hj">HJ</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-co" value="CO" checked>
+                        <label class="position-label" for="sidebar-tpos-co">CO</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-btn" value="BTN" checked>
+                        <label class="position-label" for="sidebar-tpos-btn">BTN</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-sb" value="SB" checked>
+                        <label class="position-label" for="sidebar-tpos-sb">SB</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-pos" id="sidebar-tpos-bb" value="BB" checked>
+                        <label class="position-label" for="sidebar-tpos-bb">BB</label>
+                    </div>
+
+                    <!-- Villain Positions (nur in vsopen Mode sichtbar) -->
+                    <div class="position-sub-label" id="villain-sub-label" style="display: none;">Villain</div>
+                    <div class="position-grid tournament-villain-positions" id="tournament-villain-grid" style="display: none;">
+                        <input type="checkbox" class="position-checkbox tournament-villain-pos" id="sidebar-vpos-utg" value="UTG" checked>
+                        <label class="position-label" for="sidebar-vpos-utg">UTG</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-villain-pos" id="sidebar-vpos-mp" value="MP" checked>
+                        <label class="position-label" for="sidebar-vpos-mp">MP</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-villain-pos" id="sidebar-vpos-btn" value="BTN" checked>
+                        <label class="position-label" for="sidebar-vpos-btn">BTN</label>
+
+                        <input type="checkbox" class="position-checkbox tournament-villain-pos" id="sidebar-vpos-sb" value="SB" checked>
+                        <label class="position-label" for="sidebar-vpos-sb">SB</label>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Range Viewer -->
+                <div class="sidebar-section range-viewer" id="range-section">
+                    <div class="sidebar-section-header" onclick="toggleSidebarSection('range-section')">
+                        <h3>Range</h3>
+                        <span class="chevron">&#9660;</span>
+                    </div>
+                    <div class="sidebar-section-content">
+                        <div class="range-toggle-row">
+                            <span>Aktion</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="range-mode-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span>Equity</span>
+                        </div>
+                        <div class="range-info" id="range-info">-</div>
+                        <div class="range-grid-container">
+                            <div class="range-grid" id="range-grid"></div>
+                            <div class="range-spoiler" id="range-spoiler">
+                                <span>Nach Antwort sichtbar</span>
+                            </div>
+                        </div>
+                        <div class="range-legend" id="range-legend">
+                            <span class="legend-item raise">Raise</span>
+                            <span class="legend-item jam">Jam</span>
+                            <span class="legend-item call">Call</span>
+                            <span class="legend-item limp">Limp</span>
+                            <span class="legend-item mixed">Mixed</span>
+                            <span class="legend-item fold">Fold</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Content Header (hidden - using sidebar) -->
+                <div class="content-header">
+                    <div class="mode-selector">
+                        <button class="mode-btn active" data-mode="or">OR</button>
+                    </div>
+                    <div class="stacksize-selector" id="stacksize-selector">
+                        <span class="stacksize-label">Stack:</span>
+                        <button class="stacksize-btn active" data-stack="10-20bb">10-20bb</button>
+                        <button class="stacksize-btn" data-stack="20-30bb">20-30bb</button>
+                        <button class="stacksize-btn" data-stack="25bb">25bb</button>
+                        <button class="stacksize-btn" data-stack="100bb">40-100bb</button>
+                    </div>
+                    <div class="focus-mode-indicator" id="focus-mode-indicator" style="display: none;">
+                        <span class="focus-icon">&#127919;</span>
+                        <span class="focus-text">Fokus-Modus aktiv</span>
+                    </div>
+                </div>
+
+                <!-- Poker Table -->
+                <div class="poker-table-container">
+                    <div class="poker-table">
+                        <div class="table-felt">
+                            <div class="table-center">
+                                <span class="pot-display" id="pot-display"></span>
+                            </div>
+                        </div>
+
+                        <!-- Player Seats - will be populated by JS -->
+                        <div class="seats" id="seats-container"></div>
+
+                        <!-- Hero Cards (shown at hero position) -->
+                        <div class="hero-cards" id="hero-cards"></div>
+                    </div>
+
+                    <!-- Scenario Text -->
+                    <div class="scenario-info" id="scenario-info">
+                        <div class="position-badge">Du bist BTN</div>
+                        <p class="scenario-text">Alle vor dir haben <strong>gefoldet</strong>. Was machst du?</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="actions">
+                    <button class="action-btn fold" data-action="fold">Fold<span class="shortcut">F</span></button>
+                    <button class="action-btn call" data-action="call" style="display: none;">Call<span class="shortcut">C</span></button>
+                    <button class="action-btn limp" data-action="limp" style="display: none;">Limp<span class="shortcut">L</span></button>
+                    <button class="action-btn raise" data-action="raise">Raise<span class="shortcut">R</span></button>
+                    <button class="action-btn jam" data-action="jam">All-in<span class="shortcut">J</span></button>
+                </div>
+
+                <!-- Feedback -->
+                <div class="feedback">
+                    <div class="feedback-icon">&#10003;</div>
+                    <div class="feedback-text">Richtig!</div>
+                    <div class="correct-answer"></div>
+                </div>
+
+                <!-- Next Button -->
+                <button class="next-btn">Nächste Hand &#8594;</button>
+
+                <!-- Score -->
+                <div class="score-area">
+                    <div class="score-item">
+                        <span class="score-label">Richtig</span>
+                        <span class="score-value" id="score-correct">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Gesamt</span>
+                        <span class="score-value" id="score-total">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Quote</span>
+                        <span class="score-value" id="score-percent">0%</span>
+                    </div>
+                </div>
+            </main>
         </div>
+
+        <!-- EV Section (Bottom) -->
+        <section class="ev-section collapsed" id="ev-section">
+            <div class="ev-section-header" onclick="toggleEVSection()">
+                <h3>EV Performance & Leaks</h3>
+                <span class="chevron">&#9660;</span>
+            </div>
+            <div class="ev-section-content">
+            <!-- EV Metrics -->
+            <div class="ev-panel">
+                <h3>EV Performance</h3>
+                <div class="ev-metrics-grid">
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">Net EV /100h</span>
+                        <span class="ev-metric-value main ev-positive" id="ev-per-100">+0</span>
+                    </div>
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">Bewertung</span>
+                        <span class="ev-rating" id="ev-rating">-</span>
+                    </div>
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">Gains</span>
+                        <span class="ev-metric-value ev-gain-value" id="ev-gain">+0</span>
+                    </div>
+                    <div class="ev-metric">
+                        <span class="ev-metric-label">Losses</span>
+                        <span class="ev-metric-value ev-loss-value" id="ev-loss">-0</span>
+                    </div>
+                </div>
+                <div class="ev-legend">
+                    <h4>EV-Loss pro Fehler</h4>
+                    <table>
+                        <tr><td class="rating-excellent">0-15</td><td>Klein</td></tr>
+                        <tr><td class="rating-good">15-35</td><td>Mittel</td></tr>
+                        <tr><td class="rating-medium">35-60</td><td>Gross</td></tr>
+                        <tr><td class="rating-bad">60+</td><td>Kritisch</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mistakes -->
+            <div class="ev-panel">
+                <h3>Teuerste Fehler</h3>
+                <ul class="mistakes-list" id="mistakes-list">
+                    <li class="no-mistakes">Noch keine Fehler!</li>
+                </ul>
+            </div>
+
+            <!-- Leaks -->
+            <div class="ev-panel">
+                <h3>Deine Leaks</h3>
+                <div class="weaknesses-list" id="weaknesses-list">
+                    <p class="no-weaknesses">Spiele mehr Hände um Leaks zu identifizieren</p>
+                </div>
+                <button class="focus-mode-btn" id="focus-mode-btn" onclick="toggleFocusMode()">
+                    Schwächen trainieren
+                </button>
+                <div class="stats-reset">
+                    <button class="reset-btn" onclick="resetAllStats()">Stats zurücksetzen</button>
+                </div>
+            </div>
+            </div>
+        </section>
     </div>
 
-    <div class="container">
-        <!-- Mode Selector -->
-        <div class="mode-selector">
-            <button class="mode-btn active" data-mode="rfi">RFI</button>
-            <button class="mode-btn" data-mode="3bet">3-Bet</button>
-            <button class="mode-btn" data-mode="facing3bet">vs 3-Bet</button>
-            <button class="mode-btn" data-mode="isolate">vs Limp</button>
+    <!-- Hidden legacy elements for JS compatibility -->
+    <div style="display: none;">
+        <div id="cash-positions">
+            <input type="checkbox" class="position-filter cash-pos" id="pos-utg" value="UTG" checked>
+            <input type="checkbox" class="position-filter cash-pos" id="pos-hj" value="HJ" checked>
+            <input type="checkbox" class="position-filter cash-pos" id="pos-co" value="CO" checked>
+            <input type="checkbox" class="position-filter cash-pos" id="pos-btn" value="BTN" checked>
+            <input type="checkbox" class="position-filter cash-pos" id="pos-sb" value="SB" checked>
+            <input type="checkbox" class="position-filter cash-pos" id="pos-bb" value="BB" checked>
         </div>
-
-        <!-- Focus Mode Indicator -->
-        <div class="focus-mode-indicator" id="focus-mode-indicator" style="display: none;">
-            <span class="focus-icon">🎯</span>
-            <span class="focus-text">Fokus-Modus aktiv - Trainiere deine Schwächen</span>
+        <div id="tournament-positions">
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-utg" value="UTG" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-utg1" value="UTG1" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-utg2" value="UTG2" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-mp" value="MP" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-hj" value="HJ" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-co" value="CO" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-btn" value="BTN" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-sb" value="SB" checked>
+            <input type="checkbox" class="position-filter tournament-pos" id="tpos-bb" value="BB" checked>
         </div>
-
-        <!-- Card Display Area -->
-        <div class="card-area">
-            <div class="cards">
-                <!-- Cards werden via JS eingefügt -->
-            </div>
-            <div class="situation">
-                <div class="position-badge">Du bist BTN</div>
-                <p class="scenario-text">Alle vor dir haben <strong>gefoldet</strong>.<br>Was machst du?</p>
-            </div>
+        <div class="settings-toggle"><button></button></div>
+        <div class="settings-panel"></div>
+        <div class="app-header">
+            <h1>Preflop Trainer</h1>
+            <p class="subtitle" id="game-subtitle">Tournament Full-Ring (9-Max)</p>
         </div>
-
-        <!-- Action Buttons -->
-        <div class="actions">
-            <button class="action-btn fold" data-action="fold">Fold<span class="shortcut">F</span></button>
-            <button class="action-btn call" data-action="call" style="display: none;">Call<span class="shortcut">C</span></button>
-            <button class="action-btn limp" data-action="limp" style="display: none;">Limp<span class="shortcut">L</span></button>
-            <button class="action-btn raise" data-action="raise">Raise<span class="shortcut">R</span></button>
-        </div>
-
-        <!-- Feedback -->
-        <div class="feedback">
-            <div class="feedback-icon">✓</div>
-            <div class="feedback-text">Richtig!</div>
-            <div class="correct-answer"></div>
-        </div>
-
-        <!-- Next Button -->
-        <button class="next-btn">Nächste Hand →</button>
-
-        <!-- Score -->
-        <div class="score-area">
-            <div class="score-item">
-                <span class="score-label">Richtig</span>
-                <span class="score-value" id="score-correct">0</span>
-            </div>
-            <div class="score-item">
-                <span class="score-label">Gesamt</span>
-                <span class="score-value" id="score-total">0</span>
-            </div>
-            <div class="score-item">
-                <span class="score-label">Quote</span>
-                <span class="score-value" id="score-percent">0%</span>
-            </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="settings-toggle">
-            <button>⚙ Positionen filtern</button>
-        </div>
-        <div class="settings-panel">
-            <h3>Aktive Positionen</h3>
-            <div class="position-filters">
-                <input type="checkbox" class="position-filter" id="pos-utg" value="UTG" checked>
-                <label for="pos-utg">UTG</label>
-
-                <input type="checkbox" class="position-filter" id="pos-hj" value="HJ" checked>
-                <label for="pos-hj">HJ</label>
-
-                <input type="checkbox" class="position-filter" id="pos-co" value="CO" checked>
-                <label for="pos-co">CO</label>
-
-                <input type="checkbox" class="position-filter" id="pos-btn" value="BTN" checked>
-                <label for="pos-btn">BTN</label>
-
-                <input type="checkbox" class="position-filter" id="pos-sb" value="SB" checked>
-                <label for="pos-sb">SB</label>
-
-                <input type="checkbox" class="position-filter" id="pos-bb" value="BB" checked>
-                <label for="pos-bb">BB</label>
-            </div>
-        </div>
-    </div>
-
-    <!-- EV Sidebar -->
-    <div class="ev-sidebar">
-        <!-- EV Metriken -->
-        <div class="ev-metrics">
-            <div class="ev-metric-row main-metric">
-                <div class="ev-metric">
-                    <span class="ev-metric-label">Net EV /100h</span>
-                    <span class="ev-metric-value ev-positive" id="ev-per-100">+0</span>
-                </div>
-                <div class="ev-metric">
-                    <span class="ev-metric-label">Bewertung</span>
-                    <span class="ev-rating" id="ev-rating">-</span>
-                </div>
-            </div>
-            <div class="ev-metric-row">
-                <div class="ev-metric">
-                    <span class="ev-metric-label">Gains</span>
-                    <span class="ev-metric-value ev-gain-value" id="ev-gain">+0</span>
-                </div>
-                <div class="ev-metric">
-                    <span class="ev-metric-label">Losses</span>
-                    <span class="ev-metric-value ev-loss-value" id="ev-loss">-0</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Teuerste Fehler -->
-        <div class="mistakes-panel">
-            <h3>Teuerste Fehler</h3>
-            <ul class="mistakes-list" id="mistakes-list">
-                <li class="no-mistakes">Noch keine Fehler!</li>
-            </ul>
-        </div>
-
-        <!-- Leak Detection / Weaknesses -->
-        <div class="weaknesses-panel">
-            <h3>Deine Leaks</h3>
-            <div class="weaknesses-list" id="weaknesses-list">
-                <p class="no-weaknesses">Spiele mehr Hände um Leaks zu identifizieren</p>
-            </div>
-            <button class="focus-mode-btn" id="focus-mode-btn" onclick="toggleFocusMode()">
-                Schwächen trainieren
-            </button>
-        </div>
-
-        <!-- Stats Reset -->
-        <div class="stats-reset">
-            <button class="reset-btn" onclick="resetAllStats()">Stats zurücksetzen</button>
-        </div>
-
-        <!-- EV-Loss Legende pro Hand -->
-        <div class="ev-legend">
-            <h4>EV-Loss pro Fehler</h4>
-            <table>
-                <tr><td class="rating-excellent">0-15</td><td>Kleiner Fehler</td></tr>
-                <tr><td class="rating-good">15-35</td><td>Mittlerer Fehler</td></tr>
-                <tr><td class="rating-medium">35-60</td><td>Großer Fehler</td></tr>
-                <tr><td class="rating-bad">60+</td><td>Kritischer Fehler</td></tr>
-            </table>
-        </div>
-
-        <!-- Bewertungs-Legende -->
-        <div class="ev-legend">
-            <h4>Bewertung (Net EV/100h)</h4>
-            <table>
-                <tr><td class="rating-excellent">6000+</td><td>Perfekt</td></tr>
-                <tr><td class="rating-excellent">4000+</td><td>Sehr gut</td></tr>
-                <tr><td class="rating-good">2000+</td><td>Solide</td></tr>
-                <tr><td class="rating-medium">0+</td><td>Ausbaufähig</td></tr>
-                <tr><td class="rating-bad">&lt;0</td><td>Negativ</td></tr>
-            </table>
-        </div>
-    </div>
     </div>
 
     <script src="ranges.js"></script>
+    <script src="tournament-ranges.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
